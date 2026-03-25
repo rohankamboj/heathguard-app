@@ -1,8 +1,31 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { authApi } from '../services/api'
+import { authApi } from '@/services/api'
+import type { User } from '@/types'
 
-export const useAuthStore = create(
+export interface LoginResultSuccess {
+  success: true
+  role: string
+}
+
+export interface LoginResultFailure {
+  success: false
+  error: string
+}
+
+export type LoginResult = LoginResultSuccess | LoginResultFailure
+
+interface AuthState {
+  user: User | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  login: (username: string, password: string) => Promise<LoginResult>
+  logout: () => Promise<void>
+  fetchMe: () => Promise<void>
+  role: () => string | undefined
+}
+
+export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
@@ -18,16 +41,21 @@ export const useAuthStore = create(
 
           const { data: user } = await authApi.me()
           set({ user, isAuthenticated: true, isLoading: false })
-          return { success: true, role: user.role.name }
-        } catch (err) {
+          return { success: true, role: user.role?.name ?? 'user' }
+        } catch (err: unknown) {
           set({ isLoading: false })
-          const msg = err.response?.data?.detail || 'Login failed'
+          const msg =
+            axiosDetail(err) ?? 'Login failed'
           return { success: false, error: msg }
         }
       },
 
       logout: async () => {
-        try { await authApi.logout() } catch {}
+        try {
+          await authApi.logout()
+        } catch {
+          /* ignore */
+        }
         localStorage.removeItem('access_token')
         localStorage.removeItem('refresh_token')
         set({ user: null, isAuthenticated: false })
@@ -50,3 +78,12 @@ export const useAuthStore = create(
     }
   )
 )
+
+function axiosDetail(err: unknown): string | undefined {
+  if (typeof err === 'object' && err !== null && 'response' in err) {
+    const r = err as { response?: { data?: { detail?: unknown } } }
+    const d = r.response?.data?.detail
+    if (typeof d === 'string') return d
+  }
+  return undefined
+}

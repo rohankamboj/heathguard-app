@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Card } from '../components/shared/UI'
-import PatientUpload from '../components/patient/PatientUpload'
-import PatientTable from '../components/patient/PatientTable'
+import { Card } from '@/components/shared/UI'
+import PatientUpload from '@/components/patient/PatientUpload'
+import PatientTable from '@/components/patient/PatientTable'
 // pages are in src/pages/, components in src/components/
 import { Upload, Database, Lock } from 'lucide-react'
 

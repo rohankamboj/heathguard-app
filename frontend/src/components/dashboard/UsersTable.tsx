@@ -1,11 +1,27 @@
-import { Badge } from '../shared/UI'
+import { Badge } from '@/components/shared/UI'
+import type { User } from '@/types'
+import type { BadgeVariant } from '@/components/shared/UI'
 import { format } from 'date-fns'
 import { CheckCircle2, XCircle, Lock } from 'lucide-react'
 
-const LOC_COLORS = { US: 'var(--loc-us)', IN: 'var(--loc-in)', EU: 'var(--loc-eu)', AU: 'var(--loc-au)' }
-const ROLE_BADGE = { admin: 'admin', manager: 'manager', user: 'user' }
+const LOC_COLORS: Record<string, string> = {
+  US: 'var(--loc-us)',
+  IN: 'var(--loc-in)',
+  EU: 'var(--loc-eu)',
+  AU: 'var(--loc-au)',
+}
+function roleToBadgeVariant(name?: string): BadgeVariant {
+  if (name === 'admin' || name === 'manager' || name === 'user') return name
+  return 'default'
+}
 
-export default function UsersTable({ users = [], loading }) {
+export default function UsersTable({
+  users = [],
+  loading,
+}: {
+  users?: User[]
+  loading?: boolean
+}) {
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -63,10 +79,10 @@ export default function UsersTable({ users = [], loading }) {
                 <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{user.email}</span>
               </td>
               <td style={{ padding: '12px 16px' }}>
-                <Badge variant={ROLE_BADGE[user.role?.name]}>{user.role?.name}</Badge>
+                <Badge variant={roleToBadgeVariant(user.role?.name)}>{user.role?.name}</Badge>
               </td>
               <td style={{ padding: '12px 16px' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: LOC_COLORS[user.location?.code] || 'var(--text-secondary)' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: LOC_COLORS[user.location?.code ?? ''] || 'var(--text-secondary)' }}>
                   {user.location?.code}
                   <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-muted)', marginLeft: 4 }}>· {user.location?.name}</span>
                 </span>

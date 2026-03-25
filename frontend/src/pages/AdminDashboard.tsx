@@ -1,9 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
-import { dashboardApi } from '../services/api'
-import { useAuthStore } from '../store/authStore'
-import { StatCard, Card, Badge } from '../components/shared/UI'
-import UsersTable from '../components/dashboard/UsersTable'
+import { dashboardApi } from '@/services/api'
+import { useAuthStore } from '@/store/authStore'
+import { StatCard, Card, Badge } from '@/components/shared/UI'
+import UsersTable from '@/components/dashboard/UsersTable'
 import { Users, UserCheck, Globe, Shield, Activity } from 'lucide-react'
+import type { BadgeVariant } from '@/components/shared/UI'
+
+function roleToBadgeVariant(role: string): BadgeVariant {
+  if (role === 'admin' || role === 'manager' || role === 'user') return role
+  return 'default'
+}
 
 export default function AdminDashboard() {
   const user = useAuthStore((s) => s.user)
@@ -50,7 +56,11 @@ export default function AdminDashboard() {
           value={statsLoading ? '—' : stats?.active_users ?? 0}
           icon={UserCheck}
           color="var(--success)"
-          trend={stats ? `${Math.round((stats.active_users / stats.total_users) * 100)}% active rate` : ''}
+          trend={
+            stats && stats.total_users > 0
+              ? `${Math.round((stats.active_users / stats.total_users) * 100)}% active rate`
+              : ''
+          }
         />
         <StatCard
           label="Locations"
@@ -76,7 +86,7 @@ export default function AdminDashboard() {
             </h3>
             {Object.entries(stats.roles || {}).map(([role, count]) => (
               <div key={role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                <Badge variant={role}>{role}</Badge>
+                <Badge variant={roleToBadgeVariant(role)}>{role}</Badge>
                 <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)' }}>{count}</span>
               </div>
             ))}
@@ -88,7 +98,12 @@ export default function AdminDashboard() {
               Users by Location
             </h3>
             {Object.entries(stats.locations || {}).map(([loc, count]) => {
-              const colors = { US: 'var(--loc-us)', IN: 'var(--loc-in)', EU: 'var(--loc-eu)', AU: 'var(--loc-au)' }
+              const colors: Record<string, string> = {
+                US: 'var(--loc-us)',
+                IN: 'var(--loc-in)',
+                EU: 'var(--loc-eu)',
+                AU: 'var(--loc-au)',
+              }
               const total = stats.total_users || 1
               const pct = Math.round((count / total) * 100)
               return (

@@ -1,10 +1,19 @@
-import { useAuthStore } from '../store/authStore'
-import { Card, Badge } from '../components/shared/UI'
+import { useAuthStore } from '@/store/authStore'
+import { Card, Badge, type BadgeVariant } from '@/components/shared/UI'
 import { format } from 'date-fns'
 import { User, Mail, MapPin, Users, Clock, Shield, CheckCircle2 } from 'lucide-react'
 
-const LOC_COLORS = { US: 'var(--loc-us)', IN: 'var(--loc-in)', EU: 'var(--loc-eu)', AU: 'var(--loc-au)' }
-const ROLE_BADGE = { admin: 'admin', manager: 'manager', user: 'user' }
+const LOC_COLORS: Record<string, string> = {
+  US: 'var(--loc-us)',
+  IN: 'var(--loc-in)',
+  EU: 'var(--loc-eu)',
+  AU: 'var(--loc-au)',
+}
+
+function roleToBadgeVariant(name?: string): BadgeVariant {
+  if (name === 'admin' || name === 'manager' || name === 'user') return name
+  return 'default'
+}
 
 export default function UserDashboard() {
   const user = useAuthStore((s) => s.user)
@@ -46,8 +55,8 @@ export default function UserDashboard() {
               {user?.full_name}
             </h2>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Badge variant={ROLE_BADGE[role]}>{role}</Badge>
-              <span style={{ fontSize: 12, padding: '2px 10px', borderRadius: 'var(--radius-full)', background: 'var(--bg-base)', color: LOC_COLORS[user?.location?.code] || 'var(--text-secondary)', fontWeight: 600, border: '1px solid var(--border)', fontFamily: 'var(--font-body)' }}>
+              <Badge variant={roleToBadgeVariant(role)}>{role ?? '—'}</Badge>
+              <span style={{ fontSize: 12, padding: '2px 10px', borderRadius: 'var(--radius-full)', background: 'var(--bg-base)', color: LOC_COLORS[user?.location?.code ?? ''] || 'var(--text-secondary)', fontWeight: 600, border: '1px solid var(--border)', fontFamily: 'var(--font-body)' }}>
                 {user?.location?.code} · {user?.location?.name}
               </span>
               <span style={{ fontSize: 12, padding: '2px 10px', borderRadius: 'var(--radius-full)', background: 'var(--bg-base)', color: 'var(--text-secondary)', fontWeight: 600, border: '1px solid var(--border)', fontFamily: 'var(--font-body)' }}>

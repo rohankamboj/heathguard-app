@@ -1,47 +1,85 @@
-import { useState } from 'react'
+import { useState, type FormEvent, type ChangeEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { usersApi } from '../services/api'
-import { Button, Card, Badge, Modal, Input, Select, Spinner, EmptyState } from '../components/shared/UI'
-import UsersTable from '../components/dashboard/UsersTable'
-import {
-  UserPlus, Search, Filter, UserCheck, Lock,
-  RefreshCw, Users, AlertCircle
-} from 'lucide-react'
+import axios from 'axios'
+import { usersApi } from '@/services/api'
+import { Button, Card, Modal, Input, Select, Spinner, EmptyState } from '@/components/shared/UI'
+import UsersTable from '@/components/dashboard/UsersTable'
+import { UserPlus, Search, Filter, Lock, RefreshCw, Users, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-function CreateUserModal({ open, onClose, roles, locations, teams }) {
+interface MetaRole {
+  id: number
+  name: string
+}
+
+interface MetaLocation {
+  id: number
+  code: string
+  name: string
+}
+
+interface MetaTeam {
+  id: number
+  code: string
+  name: string
+}
+
+const emptyForm = {
+  username: '',
+  email: '',
+  full_name: '',
+  password: '',
+  role_id: '',
+  location_id: '',
+  team_id: '',
+}
+
+function CreateUserModal({
+  open,
+  onClose,
+  roles,
+  locations,
+  teams,
+}: {
+  open: boolean
+  onClose: () => void
+  roles: MetaRole[]
+  locations: MetaLocation[]
+  teams: MetaTeam[]
+}) {
   const qc = useQueryClient()
-  const [form, setForm] = useState({
-    username: '', email: '', full_name: '', password: '',
-    role_id: '', location_id: '', team_id: '',
-  })
-  const [errors, setErrors] = useState({})
+  const [form, setForm] = useState(emptyForm)
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const createMutation = useMutation({
-    mutationFn: (data) => usersApi.create(data),
+    mutationFn: (data: Record<string, unknown>) => usersApi.create(data),
     onSuccess: () => {
-      qc.invalidateQueries(['admin-users'])
-      qc.invalidateQueries(['dashboard-stats'])
-      qc.invalidateQueries(['dashboard-users'])
+      void qc.invalidateQueries({ queryKey: ['admin-users'] })
+      void qc.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      void qc.invalidateQueries({ queryKey: ['dashboard-users'] })
       toast.success('User created successfully')
       onClose()
-      setForm({ username: '', email: '', full_name: '', password: '', role_id: '', location_id: '', team_id: '' })
+      setForm(emptyForm)
     },
-    onError: (err) => {
-      const detail = err.response?.data?.detail
+    onError: (err: unknown) => {
+      if (!axios.isAxiosError(err)) return
+      const detail = err.response?.data?.detail as unknown
       if (typeof detail === 'string') toast.error(detail)
       else if (Array.isArray(detail)) {
-        const errs = {}
-        detail.forEach(e => { errs[e.loc?.[1]] = e.msg })
+        const errs: Record<string, string> = {}
+        for (const e of detail as { loc?: unknown[]; msg: string }[]) {
+          const key = e.loc?.[1]
+          if (typeof key === 'string') errs[key] = e.msg
+        }
         setErrors(errs)
       }
     },
   })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     setErrors({})
-    const missing = {}
+    const missing: Record<string, string> = {}
     if (!form.username) missing.username = 'Required'
     if (!form.email) missing.email = 'Required'
     if (!form.full_name) missing.full_name = 'Required'
@@ -49,40 +87,58 @@ function CreateUserModal({ open, onClose, roles, locations, teams }) {
     if (!form.role_id) missing.role_id = 'Required'
     if (!form.location_id) missing.location_id = 'Required'
     if (!form.team_id) missing.team_id = 'Required'
-    if (Object.keys(missing).length) { setErrors(missing); return }
+    if (Object.keys(missing).length) {
+      setErrors(missing)
+      return
+    }
 
     createMutation.mutate({
       ...form,
-      role_id: parseInt(form.role_id),
-      location_id: parseInt(form.location_id),
-      team_id: parseInt(form.team_id),
+      role_id: Number(form.role_id),
+      location_id: Number(form.location_id),
+      team_id: Number(form.team_id),
     })
   }
 
-  const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }))
+  const set =
+    (k: keyof typeof form) =>
+    (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm((p) => ({ ...p, [k]: e.target.value }))
 
   return (
     <Modal open={open} onClose={onClose} title="Create New User" width={560}>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <Input label="Full Name" placeholder="Jane Smith" value={form.full_name} onChange={set('full_name')} error={errors.full_name} />
-          <Input label="Username" placeholder="jane_smith" value={form.username} onChange={set('username')} error={errors.username} />
+          <Input label="Full Name" placeholder="Jane Smith" value={form.full_name} onChange={set('full_name')} error={errors.full_name ?? ''} />
+          <Input label="Username" placeholder="jane_smith" value={form.username} onChange={set('username')} error={errors.username ?? ''} />
         </div>
-        <Input label="Email" type="email" placeholder="jane@example.com" value={form.email} onChange={set('email')} error={errors.email} />
-        <Input label="Password" type="password" placeholder="Min 8 chars, upper, lower, digit, special" value={form.password} onChange={set('password')} error={errors.password} />
+        <Input label="Email" type="email" placeholder="jane@example.com" value={form.email} onChange={set('email')} error={errors.email ?? ''} />
+        <Input label="Password" type="password" placeholder="Min 8 chars, upper, lower, digit, special" value={form.password} onChange={set('password')} error={errors.password ?? ''} />
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-          <Select label="Role" value={form.role_id} onChange={set('role_id')} error={errors.role_id}>
+          <Select label="Role" value={form.role_id} onChange={set('role_id')} error={errors.role_id ?? ''}>
             <option value="">Select role</option>
-            {roles?.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
           </Select>
-          <Select label="Location" value={form.location_id} onChange={set('location_id')} error={errors.location_id}>
+          <Select label="Location" value={form.location_id} onChange={set('location_id')} error={errors.location_id ?? ''}>
             <option value="">Select location</option>
-            {locations?.map(l => <option key={l.id} value={l.id}>{l.code} — {l.name}</option>)}
+            {locations.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.code} — {l.name}
+              </option>
+            ))}
           </Select>
-          <Select label="Team" value={form.team_id} onChange={set('team_id')} error={errors.team_id}>
+          <Select label="Team" value={form.team_id} onChange={set('team_id')} error={errors.team_id ?? ''}>
             <option value="">Select team</option>
-            {teams?.map(t => <option key={t.id} value={t.id}>{t.code} — {t.name}</option>)}
+            {teams.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.code} — {t.name}
+              </option>
+            ))}
           </Select>
         </div>
 
@@ -122,18 +178,15 @@ export default function AdminUsersPage() {
   })
 
   const unlockMutation = useMutation({
-    mutationFn: (id) => usersApi.unlock(id),
-    onSuccess: () => { qc.invalidateQueries(['admin-users']); toast.success('User unlocked') },
+    mutationFn: (id: number) => usersApi.unlock(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin-users'] })
+      toast.success('User unlocked')
+    },
     onError: () => toast.error('Failed to unlock user'),
   })
 
-  const deactivateMutation = useMutation({
-    mutationFn: (id) => usersApi.delete(id),
-    onSuccess: () => { qc.invalidateQueries(['admin-users']); toast.success('User deactivated') },
-    onError: () => toast.error('Failed to deactivate user'),
-  })
-
-  const handleSearch = (e) => {
+  const handleSearch = (e: FormEvent) => {
     e.preventDefault()
     setSearch(searchInput)
   }
@@ -251,10 +304,7 @@ export default function AdminUsersPage() {
         ) : !users.length ? (
           <EmptyState icon={Users} title="No users found" description="Try adjusting your filters or create a new user" action={<Button onClick={() => setShowCreate(true)}><UserPlus size={14} /> Create User</Button>} />
         ) : (
-          <UsersTable users={users} loading={false} showActions
-            onUnlock={(id) => unlockMutation.mutate(id)}
-            onDeactivate={(id) => deactivateMutation.mutate(id)}
-          />
+          <UsersTable users={users} loading={false} />
         )}
       </Card>
 

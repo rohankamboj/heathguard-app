@@ -1,14 +1,28 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { patientsApi } from '../../services/api'
-import { Button, Input, Select, Spinner, EmptyState, Badge } from '../shared/UI'
+import axios from 'axios'
+import { patientsApi } from '@/services/api'
+import { Button, Spinner, EmptyState, Badge } from '@/components/shared/UI'
 import { Edit2, Check, X, Trash2, Search, ChevronLeft, ChevronRight, Database, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import type { Patient } from '@/types'
 
-const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say']
+const GENDER_OPTIONS = ['Male', 'Female', 'Other', 'Prefer not to say'] as const
 
-function EditableCell({ value, field, type = 'text', editing, onChange }) {
+function EditableCell({
+  value,
+  field,
+  type = 'text',
+  editing,
+  onChange,
+}: {
+  value: string
+  field: string
+  type?: string
+  editing: boolean
+  onChange: (v: string) => void
+}) {
   if (!editing) {
     return <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{value || '—'}</span>
   }
@@ -36,44 +50,52 @@ function EditableCell({ value, field, type = 'text', editing, onChange }) {
   )
 }
 
-export default function PatientTable({ refreshKey }) {
+interface PatientEditPayload {
+  first_name: string
+  last_name: string
+  date_of_birth: string
+  gender: string
+}
+
+export default function PatientTable({ refreshKey }: { refreshKey?: number }) {
   const qc = useQueryClient()
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
   const [searchInput, setSearchInput] = useState('')
-  const [editingId, setEditingId] = useState(null)
-  const [editData, setEditData] = useState({})
-  const [deleteConfirm, setDeleteConfirm] = useState(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editData, setEditData] = useState<Partial<PatientEditPayload>>({})
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['patients', page, search, refreshKey],
-    queryFn: () => patientsApi.list({ page, page_size: 10, search: search || undefined }).then(r => r.data),
-    keepPreviousData: true,
+    queryFn: () => patientsApi.list({ page, page_size: 10, search: search || undefined }).then((r) => r.data),
+    placeholderData: (prev) => prev,
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => patientsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Record<string, unknown> }) => patientsApi.update(id, data),
     onSuccess: () => {
-      qc.invalidateQueries(['patients'])
+      void qc.invalidateQueries({ queryKey: ['patients'] })
       setEditingId(null)
       toast.success('Patient updated')
     },
-    onError: (err) => {
-      toast.error(err.response?.data?.detail || 'Update failed')
+    onError: (err: unknown) => {
+      const detail = axios.isAxiosError(err) ? err.response?.data?.detail : undefined
+      toast.error(typeof detail === 'string' ? detail : 'Update failed')
     },
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => patientsApi.delete(id),
+    mutationFn: (id: number) => patientsApi.delete(id),
     onSuccess: () => {
-      qc.invalidateQueries(['patients'])
+      void qc.invalidateQueries({ queryKey: ['patients'] })
       setDeleteConfirm(null)
       toast.success('Patient removed')
     },
     onError: () => toast.error('Delete failed'),
   })
 
-  const startEdit = (patient) => {
+  const startEdit = (patient: Patient) => {
     setEditingId(patient.id)
     setEditData({
       first_name: patient.first_name,
@@ -83,13 +105,16 @@ export default function PatientTable({ refreshKey }) {
     })
   }
 
-  const cancelEdit = () => { setEditingId(null); setEditData({}) }
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditData({})
+  }
 
-  const saveEdit = (id) => {
+  const saveEdit = (id: number) => {
     updateMutation.mutate({ id, data: editData })
   }
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: FormEvent) => {
     e.preventDefault()
     setSearch(searchInput)
     setPage(1)
@@ -168,21 +193,38 @@ export default function PatientTable({ refreshKey }) {
                       <code style={{ fontSize: 12, color: 'var(--accent)', background: 'var(--accent-glow-sm)', padding: '2px 8px', borderRadius: 4 }}>{patient.patient_id}</code>
                     </td>
                     <td style={{ padding: '11px 14px' }}>
-                      <EditableCell value={isEditing ? editData.first_name : patient.first_name} field="first_name" editing={isEditing}
-                        onChange={v => setEditData(p => ({ ...p, first_name: v }))} />
+                      <EditableCell
+                        value={String((isEditing ? editData.first_name : patient.first_name) ?? '')}
+                        field="first_name"
+                        editing={isEditing}
+                        onChange={(v) => setEditData((p) => ({ ...p, first_name: v }))}
+                      />
                     </td>
                     <td style={{ padding: '11px 14px' }}>
-                      <EditableCell value={isEditing ? editData.last_name : patient.last_name} field="last_name" editing={isEditing}
-                        onChange={v => setEditData(p => ({ ...p, last_name: v }))} />
+                      <EditableCell
+                        value={String((isEditing ? editData.last_name : patient.last_name) ?? '')}
+                        field="last_name"
+                        editing={isEditing}
+                        onChange={(v) => setEditData((p) => ({ ...p, last_name: v }))}
+                      />
                     </td>
                     <td style={{ padding: '11px 14px' }}>
-                      <EditableCell value={isEditing ? editData.date_of_birth : patient.date_of_birth} field="date_of_birth" type="date" editing={isEditing}
-                        onChange={v => setEditData(p => ({ ...p, date_of_birth: v }))} />
+                      <EditableCell
+                        value={String((isEditing ? editData.date_of_birth : patient.date_of_birth) ?? '')}
+                        field="date_of_birth"
+                        type="date"
+                        editing={isEditing}
+                        onChange={(v) => setEditData((p) => ({ ...p, date_of_birth: v }))}
+                      />
                     </td>
                     <td style={{ padding: '11px 14px' }}>
                       {isEditing ? (
-                        <EditableCell value={editData.gender} field="gender" editing
-                          onChange={v => setEditData(p => ({ ...p, gender: v }))} />
+                        <EditableCell
+                          value={String(editData.gender ?? '')}
+                          field="gender"
+                          editing
+                          onChange={(v) => setEditData((p) => ({ ...p, gender: v }))}
+                        />
                       ) : (
                         <Badge variant="default">{patient.gender}</Badge>
                       )}

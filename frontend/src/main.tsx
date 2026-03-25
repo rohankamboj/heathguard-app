@@ -16,7 +16,12 @@ const queryClient = new QueryClient({
   },
 })
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+const rootEl = document.getElementById('root')
+if (!rootEl) {
+  throw new Error('Root element #root not found')
+}
+
+ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
@@ -32,7 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               fontSize: 14,
             },
             success: { iconTheme: { primary: 'var(--success)', secondary: 'var(--bg-elevated)' } },
-            error:   { iconTheme: { primary: 'var(--danger)',  secondary: 'var(--bg-elevated)' } },
+            error: { iconTheme: { primary: 'var(--danger)', secondary: 'var(--bg-elevated)' } },
           }}
         />
       </BrowserRouter>

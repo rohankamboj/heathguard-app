@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../store/authStore'
-import { Button, Input } from '../shared/UI'
+import { useAuthStore } from '@/store/authStore'
+import { Button, Input } from '@/components/shared/UI'
 import { Lock, User, Shield, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
     if (!form.username.trim() || !form.password.trim()) {
@@ -24,8 +24,8 @@ export default function LoginPage() {
     const result = await login(form.username.trim(), form.password)
     if (result.success) {
       toast.success(`Welcome back!`)
-      const routes = { admin: '/admin', manager: '/manager', user: '/user' }
-      navigate(routes[result.role] || '/user')
+      const routes: Record<string, string> = { admin: '/admin', manager: '/manager', user: '/user' }
+      navigate(routes[result.role] ?? '/user')
     } else {
       setError(result.error)
     }

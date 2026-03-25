@@ -1,25 +1,28 @@
 import { useState, useCallback } from 'react'
-import { useDropzone } from 'react-dropzone'
-import { patientsApi } from '../../services/api'
-import { Button, Badge } from '../shared/UI'
+import { useDropzone, type FileRejection } from 'react-dropzone'
+import axios from 'axios'
+import { patientsApi } from '@/services/api'
+import { Button } from '@/components/shared/UI'
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, X, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
+import type { UploadResult } from '@/types'
 
-export default function PatientUpload({ onSuccess }) {
-  const [file, setFile] = useState(null)
+export default function PatientUpload({ onSuccess }: { onSuccess?: () => void }) {
+  const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [result, setResult] = useState(null)
+  const [result, setResult] = useState<UploadResult | null>(null)
   const [error, setError] = useState('')
 
-  const onDrop = useCallback((accepted, rejected) => {
+  const onDrop = useCallback((accepted: File[], rejected: FileRejection[]) => {
     setError('')
     setResult(null)
     if (rejected.length) {
       setError('Only .xlsx and .xls files are accepted')
       return
     }
-    if (accepted.length) setFile(accepted[0])
+    const next = accepted[0]
+    if (next) setFile(next)
   }, [])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -51,10 +54,11 @@ export default function PatientUpload({ onSuccess }) {
       } else {
         toast.error('No records were imported')
       }
-    } catch (err) {
-      const msg = err.response?.data?.detail || 'Upload failed'
-      setError(msg)
-      toast.error(msg)
+    } catch (err: unknown) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.detail : undefined
+      const text = typeof msg === 'string' ? msg : 'Upload failed'
+      setError(text)
+      toast.error(text)
     } finally {
       setUploading(false)
       setProgress(0)

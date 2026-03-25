@@ -1,12 +1,17 @@
-import { defineConfig } from 'vite'
+import path from 'node:path'
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
-// Default to localhost so dev server startup does not rely on os.networkInterfaces()
-// (can throw on some macOS/VPN/sandbox setups). Use VITE_DEV_HOST=0.0.0.0 for LAN/Docker.
 const devHost = process.env.VITE_DEV_HOST || 'localhost'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   server: {
     host: devHost,
     port: 5173,
