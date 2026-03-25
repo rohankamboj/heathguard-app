@@ -1,0 +1,21 @@
+version: '3.9'
+
+# Production override — builds frontend with nginx
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: node:20-alpine  # overridden by build
+    container_name: healthguard_frontend_prod
+    volumes: []            # no volume mounts in prod
+    ports:
+      - "80:80"
+    command: []            # nginx handles serving
+    environment: []
+
+  backend:
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    volumes: []            # no hot-reload in prod
