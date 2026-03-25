@@ -87,6 +87,7 @@ export default function AdminDashboard() {
               <h3 className="font-heading mb-4 text-sm font-bold tracking-wide text-muted-foreground uppercase">
                 Users by Role
               </h3>
+              <div className="flex flex-col gap-2">
               {Object.entries(stats.roles || {}).map(([role, count]) => (
                 <div
                   key={role}
@@ -96,6 +97,7 @@ export default function AdminDashboard() {
                   <span className="font-heading text-xl font-bold text-foreground">{count}</span>
                 </div>
               ))}
+              </div>
             </CardContent>
           </Card>
 

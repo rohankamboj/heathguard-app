@@ -100,7 +100,7 @@ function LayoutSidebar({
           <span
             style={{
               fontFamily: 'var(--font-display)',
-              fontSize: 17,
+              fontSize: 12,
               fontWeight: 800,
               color: 'var(--text-primary)',
               letterSpacing: '-0.02em',
