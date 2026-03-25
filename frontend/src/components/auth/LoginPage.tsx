@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { Button, Input } from '@/components/shared/UI'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Lock, User, Shield, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -122,49 +124,39 @@ export default function LoginPage() {
           </p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <Input
-              label="Username or Email"
-              icon={User}
-              type="text"
-              placeholder="e.g. admin or mgr_us"
-              value={form.username}
-              onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
-              autoComplete="username"
-              autoFocus
-            />
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="login-username">Username or Email</Label>
+              <Input
+                  id="login-username"
+                  type="text"
+                  placeholder="e.g. admin or mgr_us"
+                  value={form.username}
+                  onChange={(e) => setForm((p) => ({ ...p, username: e.target.value }))}
+                  autoComplete="username"
+                  autoFocus
+                
+                />
+         
+            </div>
 
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
-                  <Lock size={16} />
-                </div>
-                <input
+            <div className="flex flex-col gap-4">
+              <Label htmlFor="login-password">Password</Label>
+              <div className="relative">
+               <Input
+                  id="login-password"
                   type={showPass ? 'text' : 'password'}
                   placeholder="Your password"
                   value={form.password}
-                  onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                  onChange={(e) => setForm((p) => ({ ...p, password: e.target.value }))}
                   autoComplete="current-password"
-                  style={{
-                    width: '100%',
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius)',
-                    color: 'var(--text-primary)',
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 14,
-                    padding: '10px 40px 10px 38px',
-                    outline: 'none',
-                    transition: 'var(--transition)',
-                  }}
-                  onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-glow-sm)' }}
-                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none' }}
+           
                 />
-                <button type="button" onClick={() => setShowPass(!showPass)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex' }}>
-                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="absolute top-1/2 right-3 flex -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPass ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
               </div>
             </div>
@@ -176,7 +168,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <Button type="submit" size="lg" loading={isLoading} style={{ width: '100%', marginTop: 4 }}>
+            <Button type="submit" size="lg" loading={isLoading} className="mt-1 w-full">
               {isLoading ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>

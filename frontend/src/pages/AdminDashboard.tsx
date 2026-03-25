@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '@/services/api'
 import { useAuthStore } from '@/store/authStore'
-import { StatCard, Card, Badge } from '@/components/shared/UI'
+import { StatCard } from '@/components/shared/stat-card'
+import { Badge, type BadgeVariant } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import UsersTable from '@/components/dashboard/UsersTable'
 import { Users, UserCheck, Globe, Shield, Activity } from 'lucide-react'
-import type { BadgeVariant } from '@/components/shared/UI'
 
 function roleToBadgeVariant(role: string): BadgeVariant {
-  if (role === 'admin' || role === 'manager' || role === 'user') return role
+  const r = role.toLowerCase()
+  if (r === 'admin' || r === 'manager' || r === 'user') return r
   return 'default'
 }
 
@@ -81,22 +83,28 @@ export default function AdminDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 32 }}>
           {/* By Role */}
           <Card>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>
-              Users by Role
-            </h3>
-            {Object.entries(stats.roles || {}).map(([role, count]) => (
-              <div key={role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                <Badge variant={roleToBadgeVariant(role)}>{role}</Badge>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)' }}>{count}</span>
-              </div>
-            ))}
+            <CardContent className="pt-0">
+              <h3 className="font-heading mb-4 text-sm font-bold tracking-wide text-muted-foreground uppercase">
+                Users by Role
+              </h3>
+              {Object.entries(stats.roles || {}).map(([role, count]) => (
+                <div
+                  key={role}
+                  className="flex items-center justify-between border-b border-border py-2.5 last:border-0"
+                >
+                  <Badge variant={roleToBadgeVariant(role)}>{role}</Badge>
+                  <span className="font-heading text-xl font-bold text-foreground">{count}</span>
+                </div>
+              ))}
+            </CardContent>
           </Card>
 
           {/* By Location */}
           <Card>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>
-              Users by Location
-            </h3>
+            <CardContent className="pt-0">
+              <h3 className="font-heading mb-4 text-sm font-bold tracking-wide text-muted-foreground uppercase">
+                Users by Location
+              </h3>
             {Object.entries(stats.locations || {}).map(([loc, count]) => {
               const colors: Record<string, string> = {
                 US: 'var(--loc-us)',
@@ -118,32 +126,42 @@ export default function AdminDashboard() {
                 </div>
               )
             })}
+            </CardContent>
           </Card>
 
           {/* By Team */}
           <Card>
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>
-              Users by Team
-            </h3>
-            {Object.entries(stats.teams || {}).map(([team, count]) => (
-              <div key={team} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 13, padding: '3px 10px', borderRadius: 'var(--radius-full)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)', fontWeight: 600 }}>{team}</span>
-                <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, color: 'var(--text-primary)' }}>{count}</span>
-              </div>
-            ))}
+            <CardContent className="pt-0">
+              <h3 className="font-heading mb-4 text-sm font-bold tracking-wide text-muted-foreground uppercase">
+                Users by Team
+              </h3>
+              {Object.entries(stats.teams || {}).map(([team, count]) => (
+                <div
+                  key={team}
+                  className="flex items-center justify-between border-b border-border py-2.5 last:border-0"
+                >
+                  <span className="rounded-full border border-border bg-muted/30 px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
+                    {team}
+                  </span>
+                  <span className="font-heading text-xl font-bold text-foreground">{count}</span>
+                </div>
+              ))}
+            </CardContent>
           </Card>
         </div>
       )}
 
       {/* All Users Table */}
-      <Card style={{ padding: 0 }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Card className="gap-0 py-0">
+        <div className="flex items-center justify-between border-b border-border px-6 py-5">
           <div>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>All Users</h2>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>{users.length} total users across all locations</p>
+            <h2 className="font-heading text-lg font-bold text-foreground">All Users</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {users.length} total users across all locations
+            </p>
           </div>
         </div>
-        <div style={{ padding: '0' }}>
+        <div className="p-0">
           <UsersTable users={users} loading={usersLoading} />
         </div>
       </Card>

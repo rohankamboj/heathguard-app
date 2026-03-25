@@ -1,6 +1,5 @@
-import { Badge } from '@/components/shared/UI'
+import { Badge, type BadgeVariant } from '@/components/ui/badge'
 import type { User } from '@/types'
-import type { BadgeVariant } from '@/components/shared/UI'
 import { format } from 'date-fns'
 import { CheckCircle2, XCircle, Lock } from 'lucide-react'
 
@@ -11,7 +10,8 @@ const LOC_COLORS: Record<string, string> = {
   AU: 'var(--loc-au)',
 }
 function roleToBadgeVariant(name?: string): BadgeVariant {
-  if (name === 'admin' || name === 'manager' || name === 'user') return name
+  const n = name?.toLowerCase()
+  if (n === 'admin' || n === 'manager' || n === 'user') return n
   return 'default'
 }
 

@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { dashboardApi } from '@/services/api'
 import { useAuthStore } from '@/store/authStore'
-import { StatCard, Card } from '@/components/shared/UI'
+import { StatCard } from '@/components/shared/stat-card'
+import { Card } from '@/components/ui/card'
 import UsersTable from '@/components/dashboard/UsersTable'
 import { Users, UserCheck, FileSpreadsheet, Database } from 'lucide-react'
 
@@ -36,14 +37,10 @@ export default function ManagerDashboard() {
         <StatCard label="Total Uploads" value={statsLoading ? '—' : stats?.recent_uploads ?? 0} icon={FileSpreadsheet} color="var(--info)" />
       </div>
 
-      <Card style={{ padding: 0 }}>
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-            {user?.location?.name} Team
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
-            Users within your location scope
-          </p>
+      <Card className="gap-0 py-0">
+        <div className="border-b border-border px-6 py-5">
+          <h2 className="font-heading text-lg font-bold text-foreground">{user?.location?.name} Team</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">Users within your location scope</p>
         </div>
         <UsersTable users={users} loading={usersLoading} />
       </Card>

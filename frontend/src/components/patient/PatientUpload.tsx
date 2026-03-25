@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { useDropzone, type FileRejection } from 'react-dropzone'
 import axios from 'axios'
 import { patientsApi } from '@/services/api'
-import { Button } from '@/components/shared/UI'
+import { Button } from '@/components/ui/button'
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, X, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { UploadResult } from '@/types'
@@ -179,12 +179,12 @@ export default function PatientUpload({ onSuccess }: { onSuccess?: () => void })
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 12 }}>
-        <Button onClick={handleUpload} loading={uploading} disabled={!file || uploading} style={{ flex: 1 }}>
-          <Upload size={15} />
+        <Button onClick={handleUpload} loading={uploading} disabled={!file || uploading} className="flex-1">
+          <Upload className="size-4" />
           {uploading ? 'Encrypting & Uploading…' : 'Upload & Encrypt'}
         </Button>
         <Button variant="secondary" onClick={handleDownloadTemplate}>
-          <Download size={15} /> Template
+          <Download className="size-4" /> Template
         </Button>
       </div>
     </div>

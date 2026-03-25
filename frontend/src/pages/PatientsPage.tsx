@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card } from '@/components/shared/UI'
+import { Card, CardContent } from '@/components/ui/card'
 import PatientUpload from '@/components/patient/PatientUpload'
 import PatientTable from '@/components/patient/PatientTable'
 // pages are in src/pages/, components in src/components/
@@ -66,28 +66,29 @@ export default function PatientsPage() {
       {/* Content */}
       {tab === 'upload' ? (
         <Card>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 20 }}>
-            Upload Patient Excel File
-          </h2>
-          <PatientUpload onSuccess={handleUploadSuccess} />
+          <CardContent className="pt-0">
+            <h2 className="font-heading mb-5 text-lg font-bold text-foreground">Upload Patient Excel File</h2>
+            <PatientUpload onSuccess={handleUploadSuccess} />
+          </CardContent>
         </Card>
       ) : (
-        <Card style={{ padding: 0 }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Card className="gap-0 py-0">
+          <div className="flex items-center justify-between border-b border-border px-6 py-5">
             <div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-                Patient Records
-              </h2>
-              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 2 }}>
+              <h2 className="font-heading text-lg font-bold text-foreground">Patient Records</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 Data decrypted on-the-fly for display · Edit inline, save with full re-encryption
               </p>
             </div>
-            <button onClick={() => setTab('upload')}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: 'var(--accent-glow)', border: '1px solid var(--border-accent)', borderRadius: 'var(--radius)', color: 'var(--accent)', fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'var(--transition)' }}>
+            <button
+              type="button"
+              onClick={() => setTab('upload')}
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-[var(--border-accent)] bg-[var(--accent-glow)] px-4 py-2 font-body text-[13px] font-medium text-[var(--accent)] transition-[var(--transition)] hover:opacity-90"
+            >
               <Upload size={14} /> Upload More
             </button>
           </div>
-          <div style={{ padding: '20px 24px' }}>
+          <div className="px-6 py-5">
             <PatientTable refreshKey={refreshKey} />
           </div>
         </Card>

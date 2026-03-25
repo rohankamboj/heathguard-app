@@ -2,7 +2,10 @@ import { useState, type FormEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { patientsApi } from '@/services/api'
-import { Button, Spinner, EmptyState, Badge } from '@/components/shared/UI'
+import { EmptyState } from '@/components/shared/empty-state'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Spinner } from '@/components/ui/spinner'
 import { Edit2, Check, X, Trash2, Search, ChevronLeft, ChevronRight, Database, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
@@ -144,7 +147,9 @@ export default function PatientTable({ refreshKey }: { refreshKey?: number }) {
               onBlur={e => e.target.style.borderColor = 'var(--border)'}
             />
           </div>
-          <Button type="submit" size="sm" variant="secondary">Search</Button>
+          <Button type="submit" size="sm" variant="secondary">
+            Search
+          </Button>
           {search && <Button size="sm" variant="ghost" onClick={() => { setSearch(''); setSearchInput(''); setPage(1) }}>Clear</Button>}
         </form>
 
@@ -157,7 +162,9 @@ export default function PatientTable({ refreshKey }: { refreshKey?: number }) {
 
       {/* Table */}
       {isLoading ? (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}><Spinner /></div>
+        <div className="flex justify-center py-12">
+          <Spinner className="size-6 text-primary" />
+        </div>
       ) : isError ? (
         <div style={{ padding: 48, textAlign: 'center' }}>
           <AlertCircle size={32} color="var(--danger)" style={{ margin: '0 auto 12px' }} />
@@ -226,7 +233,7 @@ export default function PatientTable({ refreshKey }: { refreshKey?: number }) {
                           onChange={(v) => setEditData((p) => ({ ...p, gender: v }))}
                         />
                       ) : (
-                        <Badge variant="default">{patient.gender}</Badge>
+                        <Badge variant="secondary">{patient.gender}</Badge>
                       )}
                     </td>
                     <td style={{ padding: '11px 14px' }}>
@@ -239,29 +246,34 @@ export default function PatientTable({ refreshKey }: { refreshKey?: number }) {
                         {isEditing ? (
                           <>
                             <Button size="sm" variant="success" loading={isSaving} onClick={() => saveEdit(patient.id)}>
-                              <Check size={12} />
+                              <Check className="size-3" />
                             </Button>
                             <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={isSaving}>
-                              <X size={12} />
+                              <X className="size-3" />
                             </Button>
                           </>
                         ) : (
                           <>
                             <Button size="sm" variant="secondary" onClick={() => startEdit(patient)} disabled={editingId !== null}>
-                              <Edit2 size={12} />
+                              <Edit2 className="size-3" />
                             </Button>
                             {deleteConfirm === patient.id ? (
                               <>
-                                <Button size="sm" variant="danger" loading={deleteMutation.isPending} onClick={() => deleteMutation.mutate(patient.id)}>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  loading={deleteMutation.isPending}
+                                  onClick={() => deleteMutation.mutate(patient.id)}
+                                >
                                   Confirm
                                 </Button>
                                 <Button size="sm" variant="ghost" onClick={() => setDeleteConfirm(null)}>
-                                  <X size={12} />
+                                  <X className="size-3" />
                                 </Button>
                               </>
                             ) : (
                               <Button size="sm" variant="ghost" onClick={() => setDeleteConfirm(patient.id)} disabled={editingId !== null}>
-                                <Trash2 size={12} />
+                                <Trash2 className="size-3" />
                               </Button>
                             )}
                           </>
@@ -279,8 +291,8 @@ export default function PatientTable({ refreshKey }: { refreshKey?: number }) {
       {/* Pagination */}
       {totalPages > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <Button size="sm" variant="secondary" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-            <ChevronLeft size={14} />
+          <Button size="sm" variant="secondary" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
+            <ChevronLeft className="size-3.5" />
           </Button>
           {[...Array(Math.min(7, totalPages))].map((_, i) => {
             const p = i + Math.max(1, page - 3)
@@ -299,8 +311,8 @@ export default function PatientTable({ refreshKey }: { refreshKey?: number }) {
               </button>
             )
           })}
-          <Button size="sm" variant="secondary" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
-            <ChevronRight size={14} />
+          <Button size="sm" variant="secondary" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>
+            <ChevronRight className="size-3.5" />
           </Button>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/store/authStore'
-import { Card, Badge, type BadgeVariant } from '@/components/shared/UI'
+import { Badge, type BadgeVariant } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { format } from 'date-fns'
 import { User, Mail, MapPin, Users, Clock, Shield, CheckCircle2 } from 'lucide-react'
 
@@ -11,7 +12,8 @@ const LOC_COLORS: Record<string, string> = {
 }
 
 function roleToBadgeVariant(name?: string): BadgeVariant {
-  if (name === 'admin' || name === 'manager' || name === 'user') return name
+  const n = name?.toLowerCase()
+  if (n === 'admin' || n === 'manager' || n === 'user') return n
   return 'default'
 }
 
@@ -39,8 +41,13 @@ export default function UserDashboard() {
       </div>
 
       {/* Profile hero */}
-      <Card style={{ marginBottom: 24, background: 'linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%)', border: '1px solid var(--border-bright)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+      <Card
+        className="mb-6 gap-0 border-[var(--border-bright)] py-6"
+        style={{
+          background: 'linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-card) 100%)',
+        }}
+      >
+        <CardContent className="flex items-center gap-5 pt-0">
           <div style={{
             width: 72, height: 72, borderRadius: '50%',
             background: 'var(--accent-glow)', border: '3px solid var(--border-accent)',
@@ -65,31 +72,60 @@ export default function UserDashboard() {
               <Badge variant="success">Active</Badge>
             </div>
           </div>
-        </div>
+        </CardContent>
       </Card>
 
       {/* Detail fields */}
       <Card>
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 20 }}>
-          Account Details
-        </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 0 }}>
-          {fields.map(({ icon: Icon, label, value }, i) => (
-            <div key={label} style={{
-              display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 0',
-              borderBottom: i < fields.length - 1 ? '1px solid var(--border)' : 'none',
-            }}>
-              <div style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 8, color: 'var(--accent)', flexShrink: 0 }}>
-                <Icon size={14} />
+        <CardContent className="pt-0">
+          <h3 className="font-heading mb-5 text-sm font-bold tracking-wide text-muted-foreground uppercase">
+            Account Details
+          </h3>
+          <div className="grid grid-cols-1 gap-0 md:grid-cols-2">
+            {fields.map(({ icon: Icon, label, value }, i) => (
+              <div
+                key={label}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  padding: '14px 0',
+                  borderBottom: i < fields.length - 1 ? '1px solid var(--border)' : 'none',
+                }}
+              >
+                <div
+                  style={{
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 'var(--radius)',
+                    padding: 8,
+                    color: 'var(--accent)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Icon size={14} />
+                </div>
+                <div>
+                  <p
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      fontWeight: 600,
+                      marginBottom: 2,
+                    }}
+                  >
+                    {label}
+                  </p>
+                  <p style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>
+                    {value || '—'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600, marginBottom: 2 }}>{label}</p>
-                <p style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 500 }}>{value || '—'}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </CardContent>
       </Card>
     </div>
   )

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { Badge, type BadgeVariant } from '@/components/shared/UI'
+import { Badge, type BadgeVariant } from '@/components/ui/badge'
 import type { User } from '@/types'
 import {
   Shield,

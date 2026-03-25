@@ -2,10 +2,30 @@ import { useState, type FormEvent, type ChangeEvent } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { usersApi } from '@/services/api'
-import { Button, Card, Modal, Input, Select, Spinner, EmptyState } from '@/components/shared/UI'
+import { EmptyState } from '@/components/shared/empty-state'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Spinner } from '@/components/ui/spinner'
 import UsersTable from '@/components/dashboard/UsersTable'
 import { UserPlus, Search, Filter, Lock, RefreshCw, Users, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
+
+const SELECT_EMPTY = '__empty__'
 
 interface MetaRole {
   id: number
@@ -101,53 +121,162 @@ function CreateUserModal({
   }
 
   const set =
-    (k: keyof typeof form) =>
-    (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    (k: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) =>
       setForm((p) => ({ ...p, [k]: e.target.value }))
 
   return (
-    <Modal open={open} onClose={onClose} title="Create New User" width={560}>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <Input label="Full Name" placeholder="Jane Smith" value={form.full_name} onChange={set('full_name')} error={errors.full_name ?? ''} />
-          <Input label="Username" placeholder="jane_smith" value={form.username} onChange={set('username')} error={errors.username ?? ''} />
-        </div>
-        <Input label="Email" type="email" placeholder="jane@example.com" value={form.email} onChange={set('email')} error={errors.email ?? ''} />
-        <Input label="Password" type="password" placeholder="Min 8 chars, upper, lower, digit, special" value={form.password} onChange={set('password')} error={errors.password ?? ''} />
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+    >
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg" showCloseButton>
+        <DialogHeader>
+          <DialogTitle>Create New User</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="create-full_name">Full Name</Label>
+              <Input
+                id="create-full_name"
+                placeholder="Jane Smith"
+                value={form.full_name}
+                onChange={set('full_name')}
+                aria-invalid={!!errors.full_name}
+              />
+              {errors.full_name ? (
+                <p className="text-xs text-destructive">{errors.full_name}</p>
+              ) : null}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="create-username">Username</Label>
+              <Input
+                id="create-username"
+                placeholder="jane_smith"
+                value={form.username}
+                onChange={set('username')}
+                aria-invalid={!!errors.username}
+              />
+              {errors.username ? (
+                <p className="text-xs text-destructive">{errors.username}</p>
+              ) : null}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="create-email">Email</Label>
+            <Input
+              id="create-email"
+              type="email"
+              placeholder="jane@example.com"
+              value={form.email}
+              onChange={set('email')}
+              aria-invalid={!!errors.email}
+            />
+            {errors.email ? <p className="text-xs text-destructive">{errors.email}</p> : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="create-password">Password</Label>
+            <Input
+              id="create-password"
+              type="password"
+              placeholder="Min 8 chars, upper, lower, digit, special"
+              value={form.password}
+              onChange={set('password')}
+              aria-invalid={!!errors.password}
+            />
+            {errors.password ? (
+              <p className="text-xs text-destructive">{errors.password}</p>
+            ) : null}
+          </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-          <Select label="Role" value={form.role_id} onChange={set('role_id')} error={errors.role_id ?? ''}>
-            <option value="">Select role</option>
-            {roles.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </Select>
-          <Select label="Location" value={form.location_id} onChange={set('location_id')} error={errors.location_id ?? ''}>
-            <option value="">Select location</option>
-            {locations.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.code} — {l.name}
-              </option>
-            ))}
-          </Select>
-          <Select label="Team" value={form.team_id} onChange={set('team_id')} error={errors.team_id ?? ''}>
-            <option value="">Select team</option>
-            {teams.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.code} — {t.name}
-              </option>
-            ))}
-          </Select>
-        </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="create-role">Role</Label>
+              <Select
+                value={form.role_id || SELECT_EMPTY}
+                onValueChange={(v) =>
+                  setForm((p) => ({ ...p, role_id: v === SELECT_EMPTY ? '' : v }))
+                }
+              >
+                <SelectTrigger id="create-role" className="w-full" aria-invalid={!!errors.role_id}>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_EMPTY}>Select role</SelectItem>
+                  {roles.map((r) => (
+                    <SelectItem key={r.id} value={String(r.id)}>
+                      {r.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.role_id ? (
+                <p className="text-xs text-destructive">{errors.role_id}</p>
+              ) : null}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="create-location">Location</Label>
+              <Select
+                value={form.location_id || SELECT_EMPTY}
+                onValueChange={(v) =>
+                  setForm((p) => ({ ...p, location_id: v === SELECT_EMPTY ? '' : v }))
+                }
+              >
+                <SelectTrigger id="create-location" className="w-full" aria-invalid={!!errors.location_id}>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_EMPTY}>Select location</SelectItem>
+                  {locations.map((l) => (
+                    <SelectItem key={l.id} value={String(l.id)}>
+                      {l.code} — {l.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.location_id ? (
+                <p className="text-xs text-destructive">{errors.location_id}</p>
+              ) : null}
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="create-team">Team</Label>
+              <Select
+                value={form.team_id || SELECT_EMPTY}
+                onValueChange={(v) =>
+                  setForm((p) => ({ ...p, team_id: v === SELECT_EMPTY ? '' : v }))
+                }
+              >
+                <SelectTrigger id="create-team" className="w-full" aria-invalid={!!errors.team_id}>
+                  <SelectValue placeholder="Select team" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={SELECT_EMPTY}>Select team</SelectItem>
+                  {teams.map((t) => (
+                    <SelectItem key={t.id} value={String(t.id)}>
+                      {t.code} — {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.team_id ? (
+                <p className="text-xs text-destructive">{errors.team_id}</p>
+              ) : null}
+            </div>
+          </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-          <Button type="submit" loading={createMutation.isPending} style={{ flex: 1 }}>Create User</Button>
-          <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-        </div>
-      </form>
-    </Modal>
+          <div className="mt-1 flex gap-2.5">
+            <Button type="submit" loading={createMutation.isPending} className="flex-1">
+              Create User
+            </Button>
+            <Button type="button" variant="secondary" onClick={onClose}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -211,10 +340,10 @@ export default function AdminUsersPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <Button variant="secondary" size="sm" onClick={() => refetch()}>
-            <RefreshCw size={14} /> Refresh
+            <RefreshCw className="size-3.5" /> Refresh
           </Button>
           <Button size="sm" onClick={() => setShowCreate(true)}>
-            <UserPlus size={14} /> New User
+            <UserPlus className="size-3.5" /> New User
           </Button>
         </div>
       </div>
@@ -230,10 +359,13 @@ export default function AdminUsersPage() {
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {lockedUsers.map(u => (
-              <Button key={u.id} size="sm" variant="warning"
+              <Button
+                key={u.id}
+                size="sm"
+                variant="warning"
                 loading={unlockMutation.isPending}
                 onClick={() => unlockMutation.mutate(u.id)}
-                style={{ background: 'var(--warning-bg)', color: 'var(--warning)', border: '1px solid rgba(245,166,35,0.4)' }}>
+              >
                 Unlock @{u.username}
               </Button>
             ))}
@@ -242,67 +374,120 @@ export default function AdminUsersPage() {
       )}
 
       {/* Filters */}
-      <Card style={{ marginBottom: 20, padding: '16px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <Filter size={14} color="var(--text-muted)" />
+      <Card className="mb-5">
+        <CardContent className="flex flex-wrap items-center gap-3 py-2">
+          <Filter className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
 
-          <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8 }}>
-            <div style={{ position: 'relative' }}>
-              <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              <input
+          <form onSubmit={handleSearch} className="flex gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
                 value={searchInput}
-                onChange={e => setSearchInput(e.target.value)}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search name, username, email…"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-primary)', fontFamily: 'var(--font-body)', fontSize: 13, padding: '7px 12px 7px 30px', outline: 'none', width: 220 }}
-                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
-                onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                className="h-7 w-[220px] pl-8 text-[13px]"
               />
             </div>
-            <Button type="submit" size="sm" variant="secondary">Search</Button>
+            <Button type="submit" size="sm" variant="secondary">
+              Search
+            </Button>
           </form>
 
-          <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: 13, padding: '7px 12px', outline: 'none', cursor: 'pointer' }}>
-            <option value="">All Roles</option>
-            {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-          </select>
+          <Select
+            value={filterRole || SELECT_EMPTY}
+            onValueChange={(v) => setFilterRole(v === SELECT_EMPTY ? '' : v)}
+          >
+            <SelectTrigger size="sm" className="w-[min(100%,140px)] min-w-[120px] text-[13px]">
+              <SelectValue placeholder="All Roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SELECT_EMPTY}>All Roles</SelectItem>
+              {roles.map((r) => (
+                <SelectItem key={r.id} value={String(r.id)}>
+                  {r.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select value={filterLocation} onChange={e => setFilterLocation(e.target.value)}
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: 13, padding: '7px 12px', outline: 'none', cursor: 'pointer' }}>
-            <option value="">All Locations</option>
-            {locations.map(l => <option key={l.id} value={l.id}>{l.code}</option>)}
-          </select>
+          <Select
+            value={filterLocation || SELECT_EMPTY}
+            onValueChange={(v) => setFilterLocation(v === SELECT_EMPTY ? '' : v)}
+          >
+            <SelectTrigger size="sm" className="w-[min(100%,120px)] min-w-[100px] text-[13px]">
+              <SelectValue placeholder="All Locations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SELECT_EMPTY}>All Locations</SelectItem>
+              {locations.map((l) => (
+                <SelectItem key={l.id} value={String(l.id)}>
+                  {l.code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select value={filterTeam} onChange={e => setFilterTeam(e.target.value)}
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: 13, padding: '7px 12px', outline: 'none', cursor: 'pointer' }}>
-            <option value="">All Teams</option>
-            {teams.map(t => <option key={t.id} value={t.id}>{t.code}</option>)}
-          </select>
+          <Select
+            value={filterTeam || SELECT_EMPTY}
+            onValueChange={(v) => setFilterTeam(v === SELECT_EMPTY ? '' : v)}
+          >
+            <SelectTrigger size="sm" className="w-[min(100%,120px)] min-w-[100px] text-[13px]">
+              <SelectValue placeholder="All Teams" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SELECT_EMPTY}>All Teams</SelectItem>
+              {teams.map((t) => (
+                <SelectItem key={t.id} value={String(t.id)}>
+                  {t.code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-          <select value={filterActive} onChange={e => setFilterActive(e.target.value)}
-            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: 13, padding: '7px 12px', outline: 'none', cursor: 'pointer' }}>
-            <option value="">All Status</option>
-            <option value="true">Active</option>
-            <option value="false">Inactive</option>
-          </select>
+          <Select
+            value={filterActive || SELECT_EMPTY}
+            onValueChange={(v) => setFilterActive(v === SELECT_EMPTY ? '' : v)}
+          >
+            <SelectTrigger size="sm" className="w-[min(100%,130px)] min-w-[110px] text-[13px]">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SELECT_EMPTY}>All Status</SelectItem>
+              <SelectItem value="true">Active</SelectItem>
+              <SelectItem value="false">Inactive</SelectItem>
+            </SelectContent>
+          </Select>
 
           {(search || filterRole || filterLocation || filterTeam || filterActive) && (
-            <Button size="sm" variant="ghost" onClick={clearFilters}>Clear filters</Button>
+            <Button size="sm" variant="ghost" onClick={clearFilters}>
+              Clear filters
+            </Button>
           )}
-        </div>
+        </CardContent>
       </Card>
 
       {/* Table */}
-      <Card style={{ padding: 0 }}>
+      <Card className="gap-0 overflow-hidden py-0">
         {isLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><Spinner size={32} /></div>
+          <div className="flex justify-center py-16">
+            <Spinner className="size-8 text-primary" />
+          </div>
         ) : isError ? (
-          <div style={{ padding: 64, textAlign: 'center' }}>
-            <AlertCircle size={32} color="var(--danger)" style={{ margin: '0 auto 12px' }} />
-            <p style={{ color: 'var(--danger)' }}>Failed to load users</p>
+          <div className="py-16 text-center">
+            <AlertCircle className="mx-auto mb-3 size-8 text-destructive" aria-hidden />
+            <p className="text-destructive">Failed to load users</p>
           </div>
         ) : !users.length ? (
-          <EmptyState icon={Users} title="No users found" description="Try adjusting your filters or create a new user" action={<Button onClick={() => setShowCreate(true)}><UserPlus size={14} /> Create User</Button>} />
+          <EmptyState
+            icon={Users}
+            title="No users found"
+            description="Try adjusting your filters or create a new user"
+            action={
+              <Button onClick={() => setShowCreate(true)}>
+                <UserPlus className="size-3.5" /> Create User
+              </Button>
+            }
+          />
         ) : (
           <UsersTable users={users} loading={false} />
         )}
