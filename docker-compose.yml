@@ -47,8 +47,10 @@ services:
         uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
       "
 
-  # ── Seeder (runs once then exits) ───────────────────────────────────────────
+  # ── Seeder (not started by `up`; run via setup.sh or: docker compose run --rm seeder)
   seeder:
+    profiles:
+      - seed
     build:
       context: ./backend
       dockerfile: Dockerfile

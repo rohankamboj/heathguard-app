@@ -16,7 +16,7 @@ echo "╚═══════════════════════�
 echo -e "${NC}"
 
 # ── Check dependencies ────────────────────────────────────────────────────────
-echo -e "${CYAN}[1/4] Checking dependencies...${NC}"
+echo -e "${CYAN}[1/5] Checking dependencies...${NC}"
 for cmd in docker python3; do
   if ! command -v $cmd &>/dev/null; then
     echo -e "${RED}✗ '$cmd' not found. Please install it first.${NC}"
@@ -30,7 +30,7 @@ fi
 echo -e "${GREEN}✓ docker and python3 found${NC}"
 
 # ── Generate .env if missing ──────────────────────────────────────────────────
-echo -e "${CYAN}[2/4] Configuring environment...${NC}"
+echo -e "${CYAN}[2/5] Configuring environment...${NC}"
 
 ENV_FILE="./backend/.env"
 
@@ -69,11 +69,11 @@ else
 fi
 
 # ── Build & start containers ──────────────────────────────────────────────────
-echo -e "${CYAN}[3/4] Starting containers (this may take a few minutes on first run)...${NC}"
+echo -e "${CYAN}[3/5] Starting containers (this may take a few minutes on first run)...${NC}"
 docker compose up -d --build
 
 # ── Wait for backend health ────────────────────────────────────────────────────
-echo -e "${CYAN}[4/4] Waiting for services to be ready...${NC}"
+echo -e "${CYAN}[4/5] Waiting for services to be ready...${NC}"
 MAX_WAIT=60
 WAITED=0
 until curl -sf http://localhost:8000/api/health > /dev/null 2>&1; do
@@ -85,6 +85,11 @@ until curl -sf http://localhost:8000/api/health > /dev/null 2>&1; do
     exit 1
   fi
 done
+
+# ── Seed database (roles, locations, teams, demo users, sample patients) ──────
+echo -e "\n${CYAN}[5/5] Seeding database...${NC}"
+docker compose --profile seed run --rm seeder
+echo -e "${GREEN}✓ Database seed complete${NC}"
 
 echo -e "\n${GREEN}"
 echo "╔══════════════════════════════════════════════╗"
