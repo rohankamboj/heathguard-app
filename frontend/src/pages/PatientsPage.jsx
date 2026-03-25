@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card } from '../shared/UI'
+import { Card } from '../components/shared/UI'
 import PatientUpload from '../components/patient/PatientUpload'
 import PatientTable from '../components/patient/PatientTable'
 // pages are in src/pages/, components in src/components/
@@ -50,7 +50,7 @@ export default function PatientsPage() {
           <button key={key} onClick={() => setTab(key)}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 18px', borderRadius: 8, border: 'none', cursor: 'pointer',
+              padding: '8px 18px', borderRadius: 8, cursor: 'pointer',
               fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500,
               background: tab === key ? 'var(--bg-card)' : 'transparent',
               color: tab === key ? 'var(--accent)' : 'var(--text-secondary)',

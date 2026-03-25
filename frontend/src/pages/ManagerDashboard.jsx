@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
-import { dashboardApi } from '../../services/api'
-import { useAuthStore } from '../../store/authStore'
-import { StatCard, Card } from '../shared/UI'
-import UsersTable from '../dashboard/UsersTable'
+import { dashboardApi } from '../services/api'
+import { useAuthStore } from '../store/authStore'
+import { StatCard, Card } from '../components/shared/UI'
+import UsersTable from '../components/dashboard/UsersTable'
 import { Users, UserCheck, FileSpreadsheet, Activity, Database } from 'lucide-react'
 
 export default function ManagerDashboard() {

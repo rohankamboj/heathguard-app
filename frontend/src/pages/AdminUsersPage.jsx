@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { usersApi } from '../../services/api'
+import { usersApi } from '../services/api'
 import { Button, Card, Badge, Modal, Input, Select, Spinner, EmptyState } from '../components/shared/UI'
 import UsersTable from '../components/dashboard/UsersTable'
 import {

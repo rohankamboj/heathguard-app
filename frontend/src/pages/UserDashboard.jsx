@@ -1,5 +1,5 @@
-import { useAuthStore } from '../../store/authStore'
-import { Card, Badge } from '../shared/UI'
+import { useAuthStore } from '../store/authStore'
+import { Card, Badge } from '../components/shared/UI'
 import { format } from 'date-fns'
 import { User, Mail, MapPin, Users, Clock, Shield, CheckCircle2 } from 'lucide-react'
 
