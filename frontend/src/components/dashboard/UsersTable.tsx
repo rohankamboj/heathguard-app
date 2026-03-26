@@ -3,12 +3,9 @@ import type { User } from '@/types'
 import { format } from 'date-fns'
 import { CheckCircle2, XCircle, Lock } from 'lucide-react'
 
-const LOC_COLORS: Record<string, string> = {
-  US: 'var(--loc-us)',
-  IN: 'var(--loc-in)',
-  EU: 'var(--loc-eu)',
-  AU: 'var(--loc-au)',
-}
+import { locationTextClass } from '@/lib/location-classes'
+import { cn } from '@/lib/utils'
+
 function roleToBadgeVariant(name?: string): BadgeVariant {
   const n = name?.toLowerCase()
   if (n === 'admin' || n === 'manager' || n === 'user') return n
@@ -24,9 +21,13 @@ export default function UsersTable({
 }) {
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="flex flex-col gap-2">
         {[...Array(5)].map((_, i) => (
-          <div key={i} style={{ height: 56, borderRadius: 'var(--radius)', background: 'linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-hover) 50%, var(--bg-elevated) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite', animationDelay: `${i * 0.1}s` }} />
+          <div
+            key={i}
+            className="h-14 animate-shimmer-hg rounded-md bg-[linear-gradient(90deg,var(--bg-elevated)_25%,var(--bg-hover)_50%,var(--bg-elevated)_75%)] bg-[length:200%_100%]"
+            style={{ animationDelay: `${i * 0.1}s` }}
+          />
         ))}
       </div>
     )
@@ -34,77 +35,93 @@ export default function UsersTable({
 
   if (!users.length) {
     return (
-      <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <p style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--text-secondary)' }}>No users found</p>
+      <div className="px-6 py-12 text-center text-fg-muted">
+        <p className="font-display text-[15px] font-semibold text-fg-secondary">No users found</p>
       </div>
     )
   }
 
   return (
-    <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-body)' }}>
+    <div className="overflow-x-auto rounded-lg-hg border border-line">
+      <table className="w-full border-collapse font-body">
         <thead>
-          <tr style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)' }}>
-            {['Name', 'Username', 'Email', 'Role', 'Location', 'Team', 'Status', 'Last Login'].map(h => (
-              <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-                {h}
-              </th>
-            ))}
+          <tr className="border-b border-line bg-surface-elevated">
+            {['Name', 'Username', 'Email', 'Role', 'Location', 'Team', 'Status', 'Last Login'].map(
+              (h) => (
+                <th
+                  key={h}
+                  className="whitespace-nowrap px-4 py-3 text-left text-[11px] font-semibold tracking-wide text-fg-muted uppercase"
+                >
+                  {h}
+                </th>
+              ),
+            )}
           </tr>
         </thead>
         <tbody>
           {users.map((user, idx) => (
-            <tr key={user.id}
-              style={{ borderBottom: '1px solid var(--border)', transition: 'var(--transition)', background: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-hover)'}
-              onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)'}
+            <tr
+              key={user.id}
+              className={cn(
+                'border-b border-line transition-colors duration-hg ease-hg',
+                idx % 2 === 1 && 'bg-white/[0.01]',
+                'hover:bg-surface-hover',
+              )}
             >
-              <td style={{ padding: '12px 16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                    background: 'var(--accent-glow)', border: '1px solid var(--border-accent)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 12, color: 'var(--accent)',
-                  }}>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-line-accent bg-brand-accent-glow font-display text-xs font-bold text-brand-accent">
                     {user.full_name?.charAt(0)}
                   </div>
-                  <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{user.full_name}</span>
+                  <span className="whitespace-nowrap text-sm font-medium text-fg-primary">
+                    {user.full_name}
+                  </span>
                 </div>
               </td>
-              <td style={{ padding: '12px 16px' }}>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)', fontFamily: 'monospace' }}>@{user.username}</span>
+              <td className="px-4 py-3">
+                <span className="font-mono text-[13px] text-fg-secondary">@{user.username}</span>
               </td>
-              <td style={{ padding: '12px 16px' }}>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{user.email}</span>
+              <td className="px-4 py-3">
+                <span className="text-[13px] text-fg-secondary">{user.email}</span>
               </td>
-              <td style={{ padding: '12px 16px' }}>
+              <td className="px-4 py-3">
                 <Badge variant={roleToBadgeVariant(user.role?.name)}>{user.role?.name}</Badge>
               </td>
-              <td style={{ padding: '12px 16px' }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: LOC_COLORS[user.location?.code ?? ''] || 'var(--text-secondary)' }}>
+              <td className="px-4 py-3">
+                <span className={cn('text-[13px] font-semibold', locationTextClass(user.location?.code))}>
                   {user.location?.code}
-                  <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-muted)', marginLeft: 4 }}>· {user.location?.name}</span>
+                  <span className="ml-1 text-[11px] font-normal text-fg-muted">
+                    · {user.location?.name}
+                  </span>
                 </span>
               </td>
-              <td style={{ padding: '12px 16px' }}>
-                <span style={{ fontSize: 12, padding: '3px 8px', borderRadius: 'var(--radius-full)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)', fontWeight: 600 }}>
+              <td className="px-4 py-3">
+                <span className="inline-block rounded-full-hg border border-line bg-surface-elevated px-2 py-0.5 text-xs font-semibold text-fg-secondary">
                   {user.team?.code}
                 </span>
               </td>
-              <td style={{ padding: '12px 16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-1.5">
                   {user.is_locked ? (
-                    <><Lock size={13} color="var(--warning)" /><span style={{ fontSize: 12, color: 'var(--warning)' }}>Locked</span></>
+                    <>
+                      <Lock className="size-[13px] text-semantic-warning" aria-hidden />
+                      <span className="text-xs text-semantic-warning">Locked</span>
+                    </>
                   ) : user.is_active ? (
-                    <><CheckCircle2 size={13} color="var(--success)" /><span style={{ fontSize: 12, color: 'var(--success)' }}>Active</span></>
+                    <>
+                      <CheckCircle2 className="size-[13px] text-semantic-success" aria-hidden />
+                      <span className="text-xs text-semantic-success">Active</span>
+                    </>
                   ) : (
-                    <><XCircle size={13} color="var(--text-muted)" /><span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Inactive</span></>
+                    <>
+                      <XCircle className="size-[13px] text-fg-muted" aria-hidden />
+                      <span className="text-xs text-fg-muted">Inactive</span>
+                    </>
                   )}
                 </div>
               </td>
-              <td style={{ padding: '12px 16px' }}>
-                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              <td className="px-4 py-3">
+                <span className="text-xs text-fg-muted">
                   {user.last_login ? format(new Date(user.last_login), 'MMM d, HH:mm') : '—'}
                 </span>
               </td>

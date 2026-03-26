@@ -78,12 +78,25 @@ api.interceptors.response.use(
   }
 )
 
+export interface ForgotPasswordResponse {
+  message: string
+  demo_token: string | null
+}
+
+export interface ResetPasswordResponse {
+  message: string
+}
+
 export const authApi = {
   login: (username: string, password: string) =>
     api.post<AuthTokens>('/auth/login', { username, password }),
   logout: () => api.post('/auth/logout'),
   refresh: (refresh_token: string) => api.post<AuthTokens>('/auth/refresh', { refresh_token }),
   me: () => api.get<User>('/auth/me'),
+  forgotPassword: (email: string) =>
+    api.post<ForgotPasswordResponse>('/auth/forgot-password', { email }),
+  resetPassword: (token: string, new_password: string) =>
+    api.post<ResetPasswordResponse>('/auth/reset-password', { token, new_password }),
 }
 
 export const usersApi = {

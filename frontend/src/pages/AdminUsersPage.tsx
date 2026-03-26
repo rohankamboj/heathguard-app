@@ -1,4 +1,7 @@
-import { useState, type FormEvent, type ChangeEvent } from 'react'
+import { useState, useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { usersApi } from '@/services/api'
@@ -27,6 +30,41 @@ import toast from 'react-hot-toast'
 
 const SELECT_EMPTY = '__empty__'
 
+const filterSearchSchema = z.object({
+  q: z.string().max(500, 'Search is too long'),
+})
+
+const passwordRules = z
+  .string()
+  .min(8, 'At least 8 characters')
+  .regex(/[A-Z]/, 'Must contain an uppercase letter')
+  .regex(/[a-z]/, 'Must contain a lowercase letter')
+  .regex(/[0-9]/, 'Must contain a digit')
+  .regex(/[^A-Za-z0-9]/, 'Must contain a special character')
+
+const createUserSchema = z.object({
+  username: z.string().min(1, 'Username is required').max(150),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  full_name: z.string().min(1, 'Full name is required').max(200),
+  password: passwordRules,
+  role_id: z.string().refine((v) => v !== '' && v !== SELECT_EMPTY, 'Role is required'),
+  location_id: z.string().refine((v) => v !== '' && v !== SELECT_EMPTY, 'Location is required'),
+  team_id: z.string().refine((v) => v !== '' && v !== SELECT_EMPTY, 'Team is required'),
+})
+
+type CreateUserValues = z.infer<typeof createUserSchema>
+type FilterSearchValues = z.infer<typeof filterSearchSchema>
+
+const createUserDefaults: CreateUserValues = {
+  username: '',
+  email: '',
+  full_name: '',
+  password: '',
+  role_id: '',
+  location_id: '',
+  team_id: '',
+}
+
 interface MetaRole {
   id: number
   name: string
@@ -44,16 +82,6 @@ interface MetaTeam {
   name: string
 }
 
-const emptyForm = {
-  username: '',
-  email: '',
-  full_name: '',
-  password: '',
-  role_id: '',
-  location_id: '',
-  team_id: '',
-}
-
 function CreateUserModal({
   open,
   onClose,
@@ -68,8 +96,25 @@ function CreateUserModal({
   teams: MetaTeam[]
 }) {
   const qc = useQueryClient()
-  const [form, setForm] = useState(emptyForm)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useForm<CreateUserValues>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: createUserDefaults,
+  })
+
+  useEffect(() => {
+    if (open) {
+      reset(createUserDefaults)
+      clearErrors()
+    }
+  }, [open, reset, clearErrors])
 
   const createMutation = useMutation({
     mutationFn: (data: Record<string, unknown>) => usersApi.create(data),
@@ -79,50 +124,38 @@ function CreateUserModal({
       void qc.invalidateQueries({ queryKey: ['dashboard-users'] })
       toast.success('User created successfully')
       onClose()
-      setForm(emptyForm)
+      reset(createUserDefaults)
     },
     onError: (err: unknown) => {
       if (!axios.isAxiosError(err)) return
       const detail = err.response?.data?.detail as unknown
-      if (typeof detail === 'string') toast.error(detail)
-      else if (Array.isArray(detail)) {
-        const errs: Record<string, string> = {}
+      if (typeof detail === 'string') {
+        toast.error(detail)
+        return
+      }
+      if (Array.isArray(detail)) {
         for (const e of detail as { loc?: unknown[]; msg: string }[]) {
           const key = e.loc?.[1]
-          if (typeof key === 'string') errs[key] = e.msg
+          if (typeof key === 'string' && key in createUserDefaults) {
+            setError(key as keyof CreateUserValues, { message: e.msg })
+          }
         }
-        setErrors(errs)
       }
     },
   })
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    setErrors({})
-    const missing: Record<string, string> = {}
-    if (!form.username) missing.username = 'Required'
-    if (!form.email) missing.email = 'Required'
-    if (!form.full_name) missing.full_name = 'Required'
-    if (!form.password) missing.password = 'Required'
-    if (!form.role_id) missing.role_id = 'Required'
-    if (!form.location_id) missing.location_id = 'Required'
-    if (!form.team_id) missing.team_id = 'Required'
-    if (Object.keys(missing).length) {
-      setErrors(missing)
-      return
-    }
-
+  const onSubmit = (data: CreateUserValues) => {
+    clearErrors()
     createMutation.mutate({
-      ...form,
-      role_id: Number(form.role_id),
-      location_id: Number(form.location_id),
-      team_id: Number(form.team_id),
+      username: data.username.trim(),
+      email: data.email.trim(),
+      full_name: data.full_name.trim(),
+      password: data.password,
+      role_id: Number(data.role_id),
+      location_id: Number(data.location_id),
+      team_id: Number(data.team_id),
     })
   }
-
-  const set =
-    (k: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) =>
-      setForm((p) => ({ ...p, [k]: e.target.value }))
 
   return (
     <Dialog
@@ -133,21 +166,20 @@ function CreateUserModal({
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg" showCloseButton>
         <DialogHeader>
-          <DialogTitle>Create New User</DialogTitle>
+          <DialogTitle className="text-lg font-bold">Create New User</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="create-full_name">Full Name</Label>
               <Input
                 id="create-full_name"
                 placeholder="Jane Smith"
-                value={form.full_name}
-                onChange={set('full_name')}
                 aria-invalid={!!errors.full_name}
+                {...register('full_name')}
               />
               {errors.full_name ? (
-                <p className="text-xs text-destructive">{errors.full_name}</p>
+                <p className="text-xs text-destructive">{errors.full_name.message}</p>
               ) : null}
             </div>
             <div className="space-y-1.5">
@@ -155,12 +187,11 @@ function CreateUserModal({
               <Input
                 id="create-username"
                 placeholder="jane_smith"
-                value={form.username}
-                onChange={set('username')}
                 aria-invalid={!!errors.username}
+                {...register('username')}
               />
               {errors.username ? (
-                <p className="text-xs text-destructive">{errors.username}</p>
+                <p className="text-xs text-destructive">{errors.username.message}</p>
               ) : null}
             </div>
           </div>
@@ -170,11 +201,10 @@ function CreateUserModal({
               id="create-email"
               type="email"
               placeholder="jane@example.com"
-              value={form.email}
-              onChange={set('email')}
               aria-invalid={!!errors.email}
+              {...register('email')}
             />
-            {errors.email ? <p className="text-xs text-destructive">{errors.email}</p> : null}
+            {errors.email ? <p className="text-xs text-destructive">{errors.email.message}</p> : null}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="create-password">Password</Label>
@@ -182,86 +212,97 @@ function CreateUserModal({
               id="create-password"
               type="password"
               placeholder="Min 8 chars, upper, lower, digit, special"
-              value={form.password}
-              onChange={set('password')}
               aria-invalid={!!errors.password}
+              {...register('password')}
             />
             {errors.password ? (
-              <p className="text-xs text-destructive">{errors.password}</p>
+              <p className="text-xs text-destructive">{errors.password.message}</p>
             ) : null}
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label htmlFor="create-role">Role</Label>
-              <Select
-                value={form.role_id || SELECT_EMPTY}
-                onValueChange={(v) =>
-                  setForm((p) => ({ ...p, role_id: v === SELECT_EMPTY ? '' : v }))
-                }
-              >
-                <SelectTrigger id="create-role" className="w-full" aria-invalid={!!errors.role_id}>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SELECT_EMPTY}>Select role</SelectItem>
-                  {roles.map((r) => (
-                    <SelectItem key={r.id} value={String(r.id)}>
-                      {r.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="role_id"
+                render={({ field }) => (
+                  <Select
+                    value={field.value || SELECT_EMPTY}
+                    onValueChange={(v) => field.onChange(v === SELECT_EMPTY ? '' : v)}
+                  >
+                    <SelectTrigger id="create-role" className="w-full" aria-invalid={!!errors.role_id}>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SELECT_EMPTY}>Select role</SelectItem>
+                      {roles.map((r) => (
+                        <SelectItem key={r.id} value={String(r.id)}>
+                          {r.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.role_id ? (
-                <p className="text-xs text-destructive">{errors.role_id}</p>
+                <p className="text-xs text-destructive">{errors.role_id.message}</p>
               ) : null}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="create-location">Location</Label>
-              <Select
-                value={form.location_id || SELECT_EMPTY}
-                onValueChange={(v) =>
-                  setForm((p) => ({ ...p, location_id: v === SELECT_EMPTY ? '' : v }))
-                }
-              >
-                <SelectTrigger id="create-location" className="w-full" aria-invalid={!!errors.location_id}>
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SELECT_EMPTY}>Select location</SelectItem>
-                  {locations.map((l) => (
-                    <SelectItem key={l.id} value={String(l.id)}>
-                      {l.code} — {l.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="location_id"
+                render={({ field }) => (
+                  <Select
+                    value={field.value || SELECT_EMPTY}
+                    onValueChange={(v) => field.onChange(v === SELECT_EMPTY ? '' : v)}
+                  >
+                    <SelectTrigger id="create-location" className="w-full" aria-invalid={!!errors.location_id}>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SELECT_EMPTY}>Select location</SelectItem>
+                      {locations.map((l) => (
+                        <SelectItem key={l.id} value={String(l.id)}>
+                          {l.code} — {l.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.location_id ? (
-                <p className="text-xs text-destructive">{errors.location_id}</p>
+                <p className="text-xs text-destructive">{errors.location_id.message}</p>
               ) : null}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="create-team">Team</Label>
-              <Select
-                value={form.team_id || SELECT_EMPTY}
-                onValueChange={(v) =>
-                  setForm((p) => ({ ...p, team_id: v === SELECT_EMPTY ? '' : v }))
-                }
-              >
-                <SelectTrigger id="create-team" className="w-full" aria-invalid={!!errors.team_id}>
-                  <SelectValue placeholder="Select team" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SELECT_EMPTY}>Select team</SelectItem>
-                  {teams.map((t) => (
-                    <SelectItem key={t.id} value={String(t.id)}>
-                      {t.code} — {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="team_id"
+                render={({ field }) => (
+                  <Select
+                    value={field.value || SELECT_EMPTY}
+                    onValueChange={(v) => field.onChange(v === SELECT_EMPTY ? '' : v)}
+                  >
+                    <SelectTrigger id="create-team" className="w-full" aria-invalid={!!errors.team_id}>
+                      <SelectValue placeholder="Select team" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={SELECT_EMPTY}>Select team</SelectItem>
+                      {teams.map((t) => (
+                        <SelectItem key={t.id} value={String(t.id)}>
+                          {t.code} — {t.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.team_id ? (
-                <p className="text-xs text-destructive">{errors.team_id}</p>
+                <p className="text-xs text-destructive">{errors.team_id.message}</p>
               ) : null}
             </div>
           </div>
@@ -284,11 +325,20 @@ export default function AdminUsersPage() {
   const qc = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
   const [search, setSearch] = useState('')
-  const [searchInput, setSearchInput] = useState('')
   const [filterRole, setFilterRole] = useState('')
   const [filterLocation, setFilterLocation] = useState('')
   const [filterTeam, setFilterTeam] = useState('')
   const [filterActive, setFilterActive] = useState('')
+
+  const {
+    register: registerFilterSearch,
+    handleSubmit: submitFilterSearch,
+    reset: resetFilterSearch,
+    formState: { errors: filterSearchErrors },
+  } = useForm<FilterSearchValues>({
+    resolver: zodResolver(filterSearchSchema),
+    defaultValues: { q: '' },
+  })
 
   const { data: roles = [] } = useQuery({ queryKey: ['roles'], queryFn: () => usersApi.roles().then(r => r.data) })
   const { data: locations = [] } = useQuery({ queryKey: ['locations'], queryFn: () => usersApi.locations().then(r => r.data) })
@@ -315,13 +365,17 @@ export default function AdminUsersPage() {
     onError: () => toast.error('Failed to unlock user'),
   })
 
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault()
-    setSearch(searchInput)
+  const onFilterSearchSubmit = (values: FilterSearchValues) => {
+    setSearch(values.q.trim())
   }
 
   const clearFilters = () => {
-    setSearch(''); setSearchInput(''); setFilterRole(''); setFilterLocation(''); setFilterTeam(''); setFilterActive('')
+    setSearch('')
+    resetFilterSearch({ q: '' })
+    setFilterRole('')
+    setFilterLocation('')
+    setFilterTeam('')
+    setFilterActive('')
   }
 
   const lockedUsers = users.filter(u => u.is_locked)
@@ -378,19 +432,24 @@ export default function AdminUsersPage() {
         <CardContent className="flex flex-wrap items-center gap-3 py-2">
           <Filter className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
 
-          <form onSubmit={handleSearch} className="flex gap-2">
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search name, username, email…"
-                className="h-7 w-[220px] pl-8 text-[13px]"
-              />
+          <form onSubmit={submitFilterSearch(onFilterSearchSubmit)} className="flex flex-col gap-1">
+            <div className="flex gap-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search name, username, email…"
+                  className="h-7 w-[220px] pl-8 text-[13px]"
+                  aria-invalid={!!filterSearchErrors.q}
+                  {...registerFilterSearch('q')}
+                />
+              </div>
+              <Button type="submit" size="sm" variant="secondary">
+                Search
+              </Button>
             </div>
-            <Button type="submit" size="sm" variant="secondary">
-              Search
-            </Button>
+            {filterSearchErrors.q ? (
+              <p className="text-xs text-destructive">{filterSearchErrors.q.message}</p>
+            ) : null}
           </form>
 
           <Select

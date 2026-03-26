@@ -20,17 +20,17 @@ const badgeVariants = cva(
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
         accent:
-          "border border-[var(--border-accent)] bg-[var(--accent-glow)] text-[var(--accent)]",
+          "border border-line-accent bg-brand-accent-glow text-brand-accent",
         success:
-          "border border-[rgba(0,200,150,0.3)] bg-[var(--success-bg)] text-[var(--success)]",
+          "border border-semantic-success/30 bg-semantic-success-bg text-semantic-success",
         warning:
-          "border border-[rgba(245,166,35,0.3)] bg-[var(--warning-bg)] text-[var(--warning)]",
-        info: "border border-[rgba(77,166,255,0.3)] bg-[var(--info-bg)] text-[var(--info)]",
+          "border border-semantic-warning/30 bg-semantic-warning-bg text-semantic-warning",
+        info: "border border-semantic-info/30 bg-semantic-info-bg text-semantic-info",
         admin:
-          "border border-[rgba(192,132,252,0.3)] bg-[rgba(192,132,252,0.1)] text-[var(--role-admin)]",
+          "border border-role-admin/30 bg-role-admin/10 text-role-admin",
         manager:
-          "border border-[var(--border-accent)] bg-[var(--accent-glow)] text-[var(--role-manager)]",
-        user: "border border-[rgba(77,166,255,0.3)] bg-[var(--info-bg)] text-[var(--role-user)]",
+          "border border-line-accent bg-brand-accent-glow text-role-manager",
+        user: "border border-semantic-info/30 bg-semantic-info-bg text-role-user",
       },
     },
     defaultVariants: {

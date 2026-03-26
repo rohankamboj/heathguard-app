@@ -112,39 +112,12 @@ export default function App() {
       <Route
         path="*"
         element={
-          <div
-            style={{
-              minHeight: '100vh',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 16,
-              background: 'var(--bg-base)',
-            }}
-          >
-            <p
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 80,
-                fontWeight: 800,
-                color: 'var(--border-bright)',
-                lineHeight: 1,
-              }}
-            >
-              404
-            </p>
-            <p style={{ fontSize: 16, color: 'var(--text-secondary)' }}>Page not found</p>
+          <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-surface-base">
+            <p className="font-display text-[80px] leading-none font-extrabold text-line-bright">404</p>
+            <p className="text-base text-fg-secondary">Page not found</p>
             <a
               href="/"
-              style={{
-                color: 'var(--accent)',
-                fontSize: 14,
-                textDecoration: 'none',
-                border: '1px solid var(--border-accent)',
-                padding: '8px 20px',
-                borderRadius: 'var(--radius)',
-              }}
+              className="rounded-md border border-line-accent px-5 py-2 text-sm text-brand-accent no-underline transition-colors duration-hg ease-hg hover:bg-brand-accent-glow"
             >
               Go home
             </a>

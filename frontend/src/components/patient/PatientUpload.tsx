@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, X, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { UploadResult } from '@/types'
+import { cn } from '@/lib/utils'
 
 export default function PatientUpload({ onSuccess }: { onSuccess?: () => void }) {
   const [file, setFile] = useState<File | null>(null)
@@ -66,119 +67,166 @@ export default function PatientUpload({ onSuccess }: { onSuccess?: () => void })
   }
 
   const handleDownloadTemplate = () => {
-    // Create a simple CSV that user can convert — in a real app would serve an xlsx
     const csv = `Patient ID,First Name,Last Name,Date of Birth,Gender\nPT-001,John,Doe,1990-01-15,Male\nPT-002,Jane,Smith,1985-07-22,Female`
     const blob = new Blob([csv], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url; a.download = 'patient_template.csv'; a.click()
+    a.href = url
+    a.download = 'patient_template.csv'
+    a.click()
     URL.revokeObjectURL(url)
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* Instructions */}
-      <div style={{ background: 'var(--info-bg)', border: '1px solid rgba(77,166,255,0.25)', borderRadius: 'var(--radius-lg)', padding: '16px 20px' }}>
-        <p style={{ fontSize: 13, color: 'var(--info)', fontWeight: 600, marginBottom: 6 }}>Required columns (exact names):</p>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {['Patient ID', 'First Name', 'Last Name', 'Date of Birth', 'Gender'].map(col => (
-            <code key={col} style={{ fontSize: 12, background: 'rgba(77,166,255,0.15)', color: 'var(--info)', padding: '2px 8px', borderRadius: 4, fontFamily: 'monospace' }}>{col}</code>
+    <div className="flex flex-col gap-5">
+      <div className="rounded-lg-hg border border-semantic-info/25 bg-semantic-info-bg px-5 py-4">
+        <p className="mb-1.5 text-[13px] font-semibold text-semantic-info">
+          Required columns (exact names):
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {['Patient ID', 'First Name', 'Last Name', 'Date of Birth', 'Gender'].map((col) => (
+            <code
+              key={col}
+              className="rounded px-2 py-0.5 font-mono text-xs text-semantic-info bg-semantic-info/15"
+            >
+              {col}
+            </code>
           ))}
         </div>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+        <p className="mt-2 text-xs text-fg-muted">
           Gender options: Male, Female, Other, Prefer not to say · Date format: YYYY-MM-DD
         </p>
       </div>
 
-      {/* Drop zone */}
       <div
         {...getRootProps()}
-        style={{
-          border: `2px dashed ${isDragActive ? 'var(--accent)' : file ? 'var(--success)' : 'var(--border)'}`,
-          borderRadius: 'var(--radius-lg)',
-          padding: '40px 24px',
-          textAlign: 'center',
-          cursor: 'pointer',
-          background: isDragActive ? 'var(--accent-glow-sm)' : file ? 'var(--success-bg)' : 'var(--bg-elevated)',
-          transition: 'var(--transition-slow)',
-        }}
+        className={cn(
+          'cursor-pointer rounded-lg-hg border-2 border-dashed px-6 py-10 text-center transition-colors duration-hg-slow ease-hg',
+          isDragActive && 'border-brand-accent bg-brand-accent-glow-sm',
+          !isDragActive && file && 'border-semantic-success bg-semantic-success-bg',
+          !isDragActive && !file && 'border-line bg-surface-elevated',
+        )}
       >
         <input {...getInputProps()} />
         {file ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <FileSpreadsheet size={36} color="var(--success)" />
+          <div className="flex flex-col items-center gap-3">
+            <FileSpreadsheet className="size-9 text-semantic-success" aria-hidden />
             <div>
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 700, color: 'var(--success)' }}>{file.name}</p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>{(file.size / 1024).toFixed(1)} KB · Ready to upload</p>
+              <p className="font-display text-base font-bold text-semantic-success">{file.name}</p>
+              <p className="mt-1 text-[13px] text-fg-muted">
+                {(file.size / 1024).toFixed(1)} KB · Ready to upload
+              </p>
             </div>
             <button
               type="button"
-              onClick={e => { e.stopPropagation(); setFile(null) }}
-              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}
+              onClick={(e) => {
+                e.stopPropagation()
+                setFile(null)
+              }}
+              className="flex items-center gap-1 border-0 bg-transparent text-xs text-fg-muted hover:text-fg-secondary"
             >
-              <X size={12} /> Remove
+              <X className="size-3" aria-hidden /> Remove
             </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <Upload size={36} color={isDragActive ? 'var(--accent)' : 'var(--text-muted)'} strokeWidth={1.5} />
+          <div className="flex flex-col items-center gap-3">
+            <Upload
+              className={cn('size-9 stroke-[1.5]', isDragActive ? 'text-brand-accent' : 'text-fg-muted')}
+              aria-hidden
+            />
             <div>
-              <p style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: isDragActive ? 'var(--accent)' : 'var(--text-primary)' }}>
+              <p
+                className={cn(
+                  'font-display text-base font-semibold',
+                  isDragActive ? 'text-brand-accent' : 'text-fg-primary',
+                )}
+              >
                 {isDragActive ? 'Drop it here' : 'Drag & drop your Excel file'}
               </p>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>or click to browse · .xlsx and .xls only · max 50MB</p>
+              <p className="mt-1 text-[13px] text-fg-muted">
+                or click to browse · .xlsx and .xls only · max 50MB
+              </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Progress */}
-      {uploading && (
+      {uploading ? (
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Processing & encrypting…</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)' }}>{progress}%</span>
+          <div className="mb-1.5 flex justify-between">
+            <span className="text-[13px] text-fg-secondary">Processing & encrypting…</span>
+            <span className="text-[13px] font-semibold text-brand-accent">{progress}%</span>
           </div>
-          <div style={{ height: 6, background: 'var(--bg-elevated)', borderRadius: 3, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, var(--accent-dim), var(--accent))', borderRadius: 3, transition: 'width 0.3s ease', boxShadow: '0 0 8px var(--accent-glow)' }} />
+          <div className="h-1.5 overflow-hidden rounded-sm bg-surface-elevated">
+            <div
+              className="h-full rounded-sm bg-[linear-gradient(90deg,var(--accent-dim),var(--accent))] shadow-[0_0_8px_var(--accent-glow)] transition-[width] duration-300 ease-out"
+              style={{ width: `${progress}%` }}
+            />
           </div>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+          <p className="mt-1.5 text-[11px] text-fg-muted">
             🔐 Data is being AES-256 encrypted before storage
           </p>
         </div>
-      )}
+      ) : null}
 
-      {/* Error */}
-      {error && (
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: 'var(--danger-bg)', border: '1px solid rgba(255,77,109,0.25)', borderRadius: 'var(--radius)', padding: '12px 16px' }}>
-          <AlertCircle size={16} color="var(--danger)" style={{ flexShrink: 0, marginTop: 1 }} />
-          <p style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</p>
+      {error ? (
+        <div className="flex items-start gap-2.5 rounded-md border border-semantic-danger/25 bg-semantic-danger-bg px-4 py-3">
+          <AlertCircle className="mt-px size-4 shrink-0 text-semantic-danger" aria-hidden />
+          <p className="text-[13px] text-semantic-danger">{error}</p>
         </div>
-      )}
+      ) : null}
 
-      {/* Result */}
-      {result && (
-        <div style={{ background: result.successful_records > 0 ? 'var(--success-bg)' : 'var(--warning-bg)', border: `1px solid ${result.successful_records > 0 ? 'rgba(0,200,150,0.25)' : 'rgba(245,166,35,0.25)'}`, borderRadius: 'var(--radius-lg)', padding: '16px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-            <CheckCircle2 size={18} color={result.successful_records > 0 ? 'var(--success)' : 'var(--warning)'} />
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>Upload Complete</span>
-          </div>
-          <div style={{ display: 'flex', gap: 20 }}>
-            <div><p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Processed</p><p style={{ fontSize: 20, fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--text-primary)' }}>{result.total_records}</p></div>
-            <div><p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Imported</p><p style={{ fontSize: 20, fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--success)' }}>{result.successful_records}</p></div>
-            {result.failed_records > 0 && <div><p style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Failed</p><p style={{ fontSize: 20, fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--danger)' }}>{result.failed_records}</p></div>}
-          </div>
-          {result.error_details && (
-            <details style={{ marginTop: 12 }}>
-              <summary style={{ fontSize: 12, color: 'var(--warning)', cursor: 'pointer' }}>View row errors</summary>
-              <pre style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, background: 'var(--bg-base)', padding: 12, borderRadius: 6, overflow: 'auto', maxHeight: 200 }}>{result.error_details}</pre>
-            </details>
+      {result ? (
+        <div
+          className={cn(
+            'rounded-lg-hg px-5 py-4',
+            result.successful_records > 0
+              ? 'border border-semantic-success/25 bg-semantic-success-bg'
+              : 'border border-semantic-warning/25 bg-semantic-warning-bg',
           )}
+        >
+          <div className="mb-3 flex items-center gap-2.5">
+            <CheckCircle2
+              className={cn(
+                'size-[18px]',
+                result.successful_records > 0 ? 'text-semantic-success' : 'text-semantic-warning',
+              )}
+              aria-hidden
+            />
+            <span className="font-display text-[15px] font-bold text-fg-primary">Upload Complete</span>
+          </div>
+          <div className="flex gap-5">
+            <div>
+              <p className="text-[11px] tracking-wide text-fg-muted uppercase">Processed</p>
+              <p className="font-display text-xl font-extrabold text-fg-primary">{result.total_records}</p>
+            </div>
+            <div>
+              <p className="text-[11px] tracking-wide text-fg-muted uppercase">Imported</p>
+              <p className="font-display text-xl font-extrabold text-semantic-success">
+                {result.successful_records}
+              </p>
+            </div>
+            {result.failed_records > 0 ? (
+              <div>
+                <p className="text-[11px] tracking-wide text-fg-muted uppercase">Failed</p>
+                <p className="font-display text-xl font-extrabold text-semantic-danger">
+                  {result.failed_records}
+                </p>
+              </div>
+            ) : null}
+          </div>
+          {result.error_details ? (
+            <details className="mt-3">
+              <summary className="cursor-pointer text-xs text-semantic-warning">View row errors</summary>
+              <pre className="mt-2 max-h-[200px] overflow-auto rounded-md bg-surface-base p-3 text-[11px] text-fg-muted">
+                {result.error_details}
+              </pre>
+            </details>
+          ) : null}
         </div>
-      )}
+      ) : null}
 
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: 12 }}>
+      <div className="flex gap-3">
         <Button onClick={handleUpload} loading={uploading} disabled={!file || uploading} className="flex-1">
           <Upload className="size-4" />
           {uploading ? 'Encrypting & Uploading…' : 'Upload & Encrypt'}

@@ -15,6 +15,10 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+import { locationTextClass } from '@/lib/location-classes'
+import { cn } from '@/lib/utils'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
+
 const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof LayoutDashboard; end?: boolean }[]> = {
   admin: [
     { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -28,12 +32,6 @@ const NAV_BY_ROLE: Record<string, { to: string; label: string; icon: typeof Layo
 }
 
 const ROLE_BADGE = { admin: 'admin' as const, manager: 'manager' as const, user: 'user' as const }
-const LOC_COLORS: Record<string, string> = {
-  US: 'var(--loc-us)',
-  IN: 'var(--loc-in)',
-  EU: 'var(--loc-eu)',
-  AU: 'var(--loc-au)',
-}
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; end?: boolean }
 
@@ -60,264 +58,119 @@ function LayoutSidebar({
 }) {
   return (
     <aside
-      style={{
-        width: collapsed && !mobile ? 72 : 260,
-        height: '100vh',
-        background: 'var(--bg-surface)',
-        borderRight: '1px solid var(--border)',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'width 0.25s cubic-bezier(0.4,0,0.2,1)',
-        position: mobile ? 'fixed' : 'sticky',
-        top: 0,
-        left: 0,
-        zIndex: mobile ? 50 : 1,
-        flexShrink: 0,
-      }}
+      className={cn(
+        'flex h-screen shrink-0 flex-col border-line border-r bg-surface transition-[width] duration-250 ease-hg',
+        mobile ? 'fixed top-0 left-0 z-50' : 'sticky top-0 z-1',
+        collapsed && !mobile ? 'w-[72px]' : 'w-[260px]',
+      )}
     >
-      <div
-        style={{
-          padding: '20px 20px 16px',
-          borderBottom: '1px solid var(--border)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          minHeight: 72,
-        }}
-      >
-        <div
-          style={{
-            background: 'var(--accent-glow)',
-            border: '1px solid var(--border-accent)',
-            borderRadius: 10,
-            padding: 8,
-            flexShrink: 0,
-          }}
-        >
-          <Shield size={18} color="var(--accent)" />
+      <div className="flex min-h-[72px] items-center gap-3 border-line border-b px-5 pt-5 pb-4">
+        <div className="shrink-0 rounded-[10px] border border-line-accent bg-brand-accent-glow p-2">
+          <Shield className="size-[18px] text-brand-accent" aria-hidden />
         </div>
         {(!collapsed || mobile) && (
-          <span
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 12,
-              fontWeight: 800,
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-            }}
-          >
+          <span className="truncate font-display text-xs font-extrabold tracking-tight text-fg-primary">
             HealthGuard
           </span>
         )}
         {!mobile && (
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            style={{
-              marginLeft: 'auto',
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              padding: 4,
-              borderRadius: 6,
-              display: 'flex',
-              flexShrink: 0,
-            }}
-          >
-            <ChevronRight
-              size={16}
-              style={{
-                transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
-                transition: 'transform 0.25s',
-              }}
-            />
-          </button>
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setCollapsed(!collapsed)}
+              className="flex cursor-pointer rounded-md border-0 bg-transparent p-1 text-fg-muted hover:text-fg-secondary"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <ChevronRight
+                className={cn('size-4 transition-transform duration-250', collapsed ? 'rotate-0' : 'rotate-180')}
+                aria-hidden
+              />
+            </button>
+          </div>
         )}
         {mobile && (
           <button
             type="button"
             onClick={onCloseMobile}
-            style={{
-              marginLeft: 'auto',
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-              display: 'flex',
-            }}
+            className="ml-auto flex cursor-pointer border-0 bg-transparent text-fg-muted hover:text-fg-secondary"
           >
-            <X size={18} />
+            <X className="size-[18px]" aria-hidden />
           </button>
         )}
       </div>
 
       {(!collapsed || mobile) && (
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <div className="border-line border-b px-5 py-4">
+          <div className="mb-2.5 flex items-center gap-3">
             <div
-              style={{
-                width: 38,
-                height: 38,
-                borderRadius: '50%',
-                flexShrink: 0,
-                background: `linear-gradient(135deg, var(--accent-glow) 0%, var(--bg-hover) 100%)`,
-                border: '2px solid var(--border-accent)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: 'var(--font-display)',
-                fontWeight: 700,
-                fontSize: 14,
-                color: 'var(--accent)',
-              }}
+              className={cn(
+                'flex size-[38px] shrink-0 items-center justify-center rounded-full border-2 border-line-accent font-display text-sm font-bold text-brand-accent',
+                'bg-[linear-gradient(135deg,var(--accent-glow)_0%,var(--bg-hover)_100%)]',
+              )}
             >
               {user?.full_name?.charAt(0) || '?'}
             </div>
-            <div style={{ overflow: 'hidden' }}>
-              <p
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: 'var(--text-primary)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                {user?.full_name}
-              </p>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-muted)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
-                @{user?.username}
-              </p>
+            <div className="min-w-0 overflow-hidden">
+              <p className="truncate text-[13px] font-semibold text-fg-primary">{user?.full_name}</p>
+              <p className="truncate text-[11px] text-fg-muted">@{user?.username}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div className="flex flex-wrap gap-1.5">
             <Badge variant={roleBadgeVariant}>{role}</Badge>
             <span
-              style={{
-                fontSize: 11,
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-full)',
-                background: 'var(--bg-hover)',
-                color: LOC_COLORS[user?.location?.code ?? ''] || 'var(--text-secondary)',
-                fontWeight: 600,
-                fontFamily: 'var(--font-body)',
-                border: '1px solid var(--border)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.03em',
-              }}
+              className={cn(
+                'rounded-full-hg border border-line bg-surface-hover px-2 py-0.5 font-body text-[11px] font-semibold tracking-wide uppercase',
+                locationTextClass(user?.location?.code),
+              )}
             >
               {user?.location?.code}
             </span>
-            <span
-              style={{
-                fontSize: 11,
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-full)',
-                background: 'var(--bg-hover)',
-                color: 'var(--text-secondary)',
-                fontWeight: 600,
-                fontFamily: 'var(--font-body)',
-                border: '1px solid var(--border)',
-              }}
-            >
+            <span className="rounded-full-hg border border-line bg-surface-hover px-2 py-0.5 font-body text-[11px] font-semibold text-fg-secondary">
               {user?.team?.code}
             </span>
           </div>
         </div>
       )}
 
-      <nav
-        style={{
-          flex: 1,
-          padding: '12px 12px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          overflowY: 'auto',
-        }}
-      >
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-3">
         {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             onClick={() => mobile && onCloseMobile()}
-            style={({ isActive }) => ({
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: collapsed && !mobile ? '10px' : '10px 12px',
-              borderRadius: 'var(--radius)',
-              textDecoration: 'none',
-              transition: 'var(--transition)',
-              background: isActive ? 'var(--accent-glow)' : 'transparent',
-              color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
-              border: `1px solid ${isActive ? 'var(--border-accent)' : 'transparent'}`,
-              justifyContent: collapsed && !mobile ? 'center' : 'flex-start',
-            })}
+            className={({ isActive }) =>
+              cn(
+                'flex items-center gap-3 rounded-md border font-body text-sm font-medium transition-colors duration-hg ease-hg no-underline',
+                collapsed && !mobile ? 'justify-center px-2.5 py-2.5' : 'px-3 py-2.5',
+                isActive
+                  ? 'border-line-accent bg-brand-accent-glow text-brand-accent'
+                  : 'border-transparent text-fg-secondary hover:bg-surface-hover/80',
+              )
+            }
           >
-            <Icon size={18} style={{ flexShrink: 0 }} />
-            {(!collapsed || mobile) && (
-              <span
-                style={{
-                  fontSize: 14,
-                  fontWeight: 500,
-                  fontFamily: 'var(--font-body)',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {label}
-              </span>
-            )}
+            <Icon className="size-[18px] shrink-0" aria-hidden />
+            {(!collapsed || mobile) && <span className="whitespace-nowrap">{label}</span>}
           </NavLink>
         ))}
       </nav>
 
-      <div style={{ padding: 12, borderTop: '1px solid var(--border)' }}>
-        <button
-          type="button"
-          onClick={onLogout}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            padding: collapsed && !mobile ? '10px' : '10px 12px',
-            borderRadius: 'var(--radius)',
-            background: 'none',
-            border: 'none',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-            transition: 'var(--transition)',
-            justifyContent: collapsed && !mobile ? 'center' : 'flex-start',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--danger-bg)'
-            e.currentTarget.style.color = 'var(--danger)'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'none'
-            e.currentTarget.style.color = 'var(--text-muted)'
-          }}
-        >
-          <LogOut size={18} style={{ flexShrink: 0 }} />
-          {(!collapsed || mobile) && (
-            <span style={{ fontSize: 14, fontWeight: 500, fontFamily: 'var(--font-body)' }}>Sign out</span>
-          )}
-        </button>
-      </div>
+      {mobile && (
+        <div className="border-line border-t p-3">
+          <button
+            type="button"
+            onClick={onLogout}
+            className={cn(
+              'flex w-full cursor-pointer items-center gap-3 rounded-md border-0 bg-transparent font-body text-sm font-medium text-fg-muted transition-colors duration-hg ease-hg',
+              'hover:bg-semantic-danger-bg hover:text-semantic-danger',
+              'px-3 py-2.5',
+            )}
+          >
+            <LogOut className="size-[18px] shrink-0" aria-hidden />
+            <span>Sign out</span>
+          </button>
+        </div>
+      )}
     </aside>
   )
 }
@@ -351,78 +204,60 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg-base)' }}>
-      <div style={{ display: 'none' }} className="desktop-sidebar">
+    <div className="flex h-screen overflow-hidden bg-surface-base">
+      <div className="desktop-sidebar hidden">
         <LayoutSidebar {...sidebarProps} />
       </div>
 
-      {mobileOpen && (
+      {mobileOpen ? (
         <>
           <div
             role="presentation"
             onClick={() => setMobileOpen(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(8,12,20,0.7)',
-              zIndex: 49,
-              backdropFilter: 'blur(2px)',
-            }}
+            className="fixed inset-0 z-49 bg-surface-base/70 backdrop-blur-sm"
           />
           <LayoutSidebar {...sidebarProps} mobile />
         </>
-      )}
+      ) : null}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <header
-          style={{
-            height: 56,
-            borderBottom: '1px solid var(--border)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 20px',
-            background: 'var(--bg-surface)',
-            flexShrink: 0,
-          }}
-          className="mobile-header"
-        >
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-14 shrink-0 items-center justify-between border-line border-b bg-surface px-5 md:hidden">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              display: 'flex',
-            }}
+            className="flex cursor-pointer border-0 bg-transparent text-fg-secondary hover:text-fg-primary"
+            aria-label="Open menu"
           >
-            <Menu size={20} />
+            <Menu className="size-5" aria-hidden />
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Shield size={16} color="var(--accent)" />
-            <span
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 15,
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-              }}
-            >
-              HealthGuard
-            </span>
+          <div className="flex items-center gap-2">
+            <Shield className="size-4 text-brand-accent" aria-hidden />
+            <span className="font-display text-[15px] font-bold text-fg-primary">HealthGuard</span>
           </div>
-          <div style={{ width: 20 }} />
+          <ThemeToggle size="sm" className="border-line bg-surface-elevated" />
         </header>
 
-        <main style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>{children}</main>
+        <header className="hidden h-14 shrink-0 items-center justify-end gap-2 border-line border-b bg-surface px-5 md:flex">
+          <ThemeToggle size="sm" className="border-line bg-surface-elevated" />
+          <button
+            type="button"
+            onClick={handleLogout}
+            className={cn(
+              'flex cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-3 py-2 font-body text-sm font-medium text-fg-muted transition-colors duration-hg ease-hg',
+              'hover:bg-semantic-danger-bg hover:text-semantic-danger',
+            )}
+          >
+            <LogOut className="size-[18px] shrink-0" aria-hidden />
+            <span>Sign out</span>
+          </button>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-8">{children}</main>
       </div>
 
       <style>{`
         @media (min-width: 768px) {
           .desktop-sidebar { display: block !important; }
-          .mobile-header { display: none !important; }
         }
       `}</style>
     </div>

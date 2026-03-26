@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import App from './App'
+import { ThemeSync } from '@/components/shared/ThemeSync'
 import './styles/globals.css'
 
 const queryClient = new QueryClient({
@@ -25,17 +26,13 @@ ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ThemeSync />
         <App />
         <Toaster
           position="top-right"
           toastOptions={{
-            style: {
-              background: 'var(--bg-elevated)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-bright)',
-              fontFamily: 'var(--font-body)',
-              fontSize: 14,
-            },
+            className:
+              '!bg-surface-elevated !text-fg-primary !border !border-line-bright !font-body !text-sm',
             success: { iconTheme: { primary: 'var(--success)', secondary: 'var(--bg-elevated)' } },
             error: { iconTheme: { primary: 'var(--danger)', secondary: 'var(--bg-elevated)' } },
           }}

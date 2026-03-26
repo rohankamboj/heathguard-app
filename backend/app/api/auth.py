@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from app.core.database import get_db
-from app.core.security import verify_password, create_access_token, create_refresh_token, decode_token
+from app.core.security import verify_password, create_access_token, create_refresh_token, create_reset_token, decode_token, hash_password, validate_password_strength
 from app.core.config import settings
 from app.core.deps import get_current_user, log_audit
 from app.models.models import User
-from app.schemas.schemas import LoginRequest, TokenResponse, RefreshRequest, UserOut
+from app.schemas.schemas import LoginRequest, TokenResponse, RefreshRequest, UserOut, PasswordResetRequest, PasswordResetConfirm
 import logging
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -109,3 +109,56 @@ async def logout(
 @router.get("/me", response_model=UserOut)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.post("/forgot-password")
+async def forgot_password(body: PasswordResetRequest, db: Session = Depends(get_db)):
+    """
+    Generate a password-reset token for the given email.
+    In production this token would be emailed; for demo it is returned directly.
+    The endpoint always returns 200 so callers cannot enumerate registered emails.
+    """
+    user = db.query(User).filter(User.email == body.email, User.is_active == True).first()
+    if not user:
+        # Don't reveal whether the email exists
+        return {"message": "If that email is registered, a reset token has been generated.", "demo_token": None}
+
+    reset_token = create_reset_token({"sub": str(user.id)})
+    log_audit(db, user.id, "PASSWORD_RESET_REQUESTED")
+    logger.info(f"Password reset requested for user: {user.username}")
+
+    return {
+        "message": "Reset token generated. Use it with /auth/reset-password within 15 minutes.",
+        # demo_token is returned here for testing purposes only.
+        # In production: send via email and remove this field from the response.
+        "demo_token": reset_token,
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(body: PasswordResetConfirm, db: Session = Depends(get_db)):
+    """Validate the reset token and set the new password."""
+    payload = decode_token(body.token)
+    if not payload or payload.get("type") != "reset":
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+
+    user_id = payload.get("sub")
+    user = db.query(User).filter(User.id == int(user_id), User.is_active == True).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+
+    valid, msg = validate_password_strength(body.new_password)
+    if not valid:
+        raise HTTPException(status_code=422, detail=msg)
+
+    user.hashed_password = hash_password(body.new_password)
+    user.password_changed_at = datetime.utcnow()
+    # Clear any lockout on successful reset
+    user.failed_login_attempts = 0
+    user.is_locked = False
+    user.locked_until = None
+    db.commit()
+
+    log_audit(db, user.id, "PASSWORD_RESET_COMPLETED")
+    logger.info(f"Password reset completed for user: {user.username}")
+    return {"message": "Password reset successfully. You can now log in with your new password."}

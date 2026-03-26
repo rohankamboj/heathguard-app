@@ -21,9 +21,9 @@ const buttonVariants = cva(
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
         success:
-          "border border-[var(--success)] bg-[var(--success-bg)] text-[var(--success)] hover:bg-[var(--success)] hover:text-[var(--text-inverse)] focus-visible:border-[var(--success)] focus-visible:ring-[var(--success)]/25",
+          "border border-semantic-success bg-semantic-success-bg text-semantic-success hover:bg-semantic-success hover:text-fg-inverse focus-visible:border-semantic-success focus-visible:ring-semantic-success/25",
         warning:
-          "border border-[var(--warning)] bg-[var(--warning-bg)] text-[var(--warning)] hover:bg-[var(--warning)] hover:text-[var(--text-inverse)] focus-visible:border-[var(--warning)] focus-visible:ring-[var(--warning)]/25",
+          "border border-semantic-warning bg-semantic-warning-bg text-semantic-warning hover:bg-semantic-warning hover:text-fg-inverse focus-visible:border-semantic-warning focus-visible:ring-semantic-warning/25",
       },
       size: {
         default:

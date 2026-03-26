@@ -5,6 +5,8 @@ import { StatCard } from '@/components/shared/stat-card'
 import { Badge, type BadgeVariant } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import UsersTable from '@/components/dashboard/UsersTable'
+import { LOCATION_BG_CLASS, LOCATION_TEXT_CLASS } from '@/lib/location-classes'
+import { cn } from '@/lib/utils'
 import { Users, UserCheck, Globe, Shield, Activity } from 'lucide-react'
 
 function roleToBadgeVariant(role: string): BadgeVariant {
@@ -27,18 +29,18 @@ export default function AdminDashboard() {
   })
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', animation: 'fadeIn 0.4s ease' }}>
+    <div className="mx-auto max-w-[1280px] animate-fade-in-hg flex flex-col gap-4">
       {/* Header */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-          <div style={{ background: 'var(--accent-glow)', border: '1px solid var(--border-accent)', borderRadius: 10, padding: 8 }}>
-            <Shield size={20} color="var(--accent)" />
+      <div className="">
+        <div className="mb-2 flex items-center gap-3">
+          <div className="rounded-[10px] border border-line-accent bg-brand-accent-glow p-2">
+            <Shield className="size-5 text-brand-accent" aria-hidden />
           </div>
           <div>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+            <h1 className="font-display text-[28px] font-extrabold tracking-tight text-fg-primary">
               Admin Dashboard
             </h1>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 2 }}>
+            <p className="mt-0.5 text-sm text-fg-secondary">
               Welcome back, {user?.full_name} — full system overview
             </p>
           </div>
@@ -46,18 +48,18 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+      <div className=" grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
         <StatCard
           label="Total Users"
           value={statsLoading ? '—' : stats?.total_users ?? 0}
           icon={Users}
-          color="var(--accent)"
+          iconTone="accent"
         />
         <StatCard
           label="Active Users"
           value={statsLoading ? '—' : stats?.active_users ?? 0}
           icon={UserCheck}
-          color="var(--success)"
+          iconTone="success"
           trend={
             stats && stats.total_users > 0
               ? `${Math.round((stats.active_users / stats.total_users) * 100)}% active rate`
@@ -68,19 +70,19 @@ export default function AdminDashboard() {
           label="Locations"
           value={statsLoading ? '—' : Object.keys(stats?.locations || {}).length}
           icon={Globe}
-          color="var(--info)"
+          iconTone="info"
         />
         <StatCard
           label="Teams"
           value={statsLoading ? '—' : Object.keys(stats?.teams || {}).length}
           icon={Activity}
-          color="var(--role-admin)"
+          iconTone="admin"
         />
       </div>
 
       {/* Breakdowns */}
       {stats && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginBottom: 32 }}>
+        <div className=" grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
           {/* By Role */}
           <Card>
             <CardContent className="pt-0">
@@ -108,22 +110,31 @@ export default function AdminDashboard() {
                 Users by Location
               </h3>
             {Object.entries(stats.locations || {}).map(([loc, count]) => {
-              const colors: Record<string, string> = {
-                US: 'var(--loc-us)',
-                IN: 'var(--loc-in)',
-                EU: 'var(--loc-eu)',
-                AU: 'var(--loc-au)',
-              }
               const total = stats.total_users || 1
               const pct = Math.round((count / total) * 100)
               return (
-                <div key={loc} style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: colors[loc] || 'var(--text-secondary)' }}>{loc}</span>
-                    <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{count} ({pct}%)</span>
+                <div key={loc} className="mb-3.5">
+                  <div className="mb-1.5 flex justify-between">
+                    <span
+                      className={cn(
+                        'text-[13px] font-semibold',
+                        LOCATION_TEXT_CLASS[loc] ?? 'text-fg-secondary',
+                      )}
+                    >
+                      {loc}
+                    </span>
+                    <span className="text-[13px] text-fg-muted">
+                      {count} ({pct}%)
+                    </span>
                   </div>
-                  <div style={{ height: 4, background: 'var(--bg-elevated)', borderRadius: 2, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${pct}%`, background: colors[loc] || 'var(--accent)', borderRadius: 2, transition: 'width 0.6s ease' }} />
+                  <div className="h-1 overflow-hidden rounded-sm bg-surface-elevated">
+                    <div
+                      className={cn(
+                        'h-full rounded-sm transition-[width] duration-500 ease-out',
+                        LOCATION_BG_CLASS[loc] ?? 'bg-brand-accent',
+                      )}
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
                 </div>
               )
